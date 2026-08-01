@@ -18,33 +18,111 @@ Prefix defaults to `!eql`:
 
 Replies are plain text plus a wiki link (Twitch has no embeds).
 
-## Setup
-
-1. Create a Twitch account for the bot (or use an existing one).
-2. Get an OAuth token with `chat:read` and `chat:edit` (e.g. [Twitch Token Generator](https://twitchtokengenerator.com/) or your own Twitch app).
-3. Copy env and fill it in:
+## Quick start (after you have a token)
 
 ```bash
-cp .env.example .env
-# TWITCH_USERNAME, TWITCH_OAUTH_TOKEN, TWITCH_CHANNELS
-```
-
-4. Run:
-
-```bash
+cd ~/projects/EQL-twitch-bot
+cp .env.example .env   # if you don't already have .env
+# edit .env — see "Your steps" below
 npm install
-npm run dev
-# or
-npm run build && npm start
+npm run smoke -- "item SoulFire"   # wiki only, no Twitch login
+npm run dev                        # connects to Twitch chat
 ```
 
-Docker:
+In your stream chat (or the channel listed in `TWITCH_CHANNELS`), try: `!eql help`
+
+## Your steps (Twitch — required once)
+
+These need your browser / bot account. Nobody else can do them for you.
+
+### 1. Bot Twitch account
+
+You already created one. Note its **login** (username), all lowercase for `.env`.
+
+### 2. Mod the bot in your stream channel
+
+Logged into your **streamer** account → chat → mod the bot:
+
+```
+/mod BOT_USERNAME
+```
+
+Optional but recommended (higher chat limits / fewer “not verified” issues).
+
+### 3. Register a Twitch application
+
+1. Log into [Twitch Developer Console](https://dev.twitch.tv/console/apps) as the **bot** account (or any account you control; you’ll authorize as the bot in the next step).
+2. **Register Your Application**
+   - Name: e.g. `EQL Wiki Bot` (don’t put the word “Twitch” in the name)
+   - OAuth Redirect URLs: `http://localhost:3000`
+   - Category: **Chat Bot**
+3. Create → open the app → copy **Client ID**. Generate a **Client Secret** and save it somewhere private.
+
+### 4. Get a user access token (as the bot)
+
+You need a **user** token for the bot with scopes `chat:read` and `chat:edit`.
+
+**Easiest (browser, short-lived / fine for testing):**
+
+1. Log out of Twitch in the browser, then log in as the **bot**.
+2. Open this URL (replace `YOUR_CLIENT_ID`):
+
+```
+https://id.twitch.tv/oauth2/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=http://localhost:3000&response_type=token&scope=chat:read+chat:edit
+```
+
+3. Allow → browser lands on `http://localhost:3000/#access_token=...&...` (page may fail to load; that’s OK).
+4. Copy the `access_token` value from the address bar.
+
+**More durable (Twitch CLI, refreshable):**
+
+```bash
+brew install twitch-cli
+twitch configure   # paste Client ID + Secret
+# Log in as the BOT when the browser opens:
+twitch token -u -s "chat:read chat:edit"
+```
+
+Paste the printed token into `.env` as `TWITCH_OAUTH_TOKEN` (with or without `oauth:` — both work).
+
+> Tokens expire. If the bot suddenly can’t chat, re-run step 4.
+
+### 5. Fill `.env`
+
+```bash
+cd ~/projects/EQL-twitch-bot
+cp .env.example .env   # already done locally if you followed Quick start
+```
+
+Edit `.env`:
+
+```
+TWITCH_USERNAME=your_bot_login
+TWITCH_OAUTH_TOKEN=oauth:paste_token_here
+TWITCH_CHANNELS=your_streamer_login
+```
+
+`TWITCH_CHANNELS` is the channel(s) to join — usually **your streamer login**, not the bot’s. Comma-separate for multiple.
+
+### 6. Run locally
+
+```bash
+npm run dev
+```
+
+You should see a “Connected … as …” log. In that channel’s chat: `!eql item SoulFire`.
+
+### 7. Deploy later (optional)
+
+Same image/env on any host (including Lightsail beside Chronicler):
 
 ```bash
 docker compose up -d --build
 ```
 
-## Env
+Keep `.env` on the server only — never commit it.
+
+## Env reference
 
 | Variable | Required | Notes |
 |----------|----------|--------|
@@ -54,7 +132,18 @@ docker compose up -d --build
 | `TWITCH_PREFIX` | no | Default `!eql` |
 | `TWITCH_COOLDOWN_MS` | no | Default `2500` between replies per channel |
 
+## Scripts
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Run bot (watch mode) |
+| `npm start` | Run built `dist/` |
+| `npm test` | Unit tests (parser/format) |
+| `npm run smoke -- "item SoulFire"` | Live EQLwiki lookup, no Twitch |
+| `npm run typecheck` / `npm run build` | TypeScript |
+
 ## Notes
 
-- EQLwiki client logic lives in `src/eqlwiki.ts` (ported from Chronicler). If Discord lookup behavior changes upstream, sync this file when you care.
+- EQLwiki client logic lives in `src/eqlwiki.ts` (ported from Chronicler). Sync from `norrath-roster` when Discord wiki behavior changes and you care.
 - No Discord, music, moderation, or roster DB — wiki chat only.
+- Git remote should be SSH: `git@github.com:jungleberrydev/EQL-twitch-bot.git` (HTTPS password auth will fail).
