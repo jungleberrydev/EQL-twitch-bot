@@ -1,6 +1,9 @@
 import tmi from "tmi.js";
 import { config } from "./config.js";
-import { handleEqlCommand } from "./handler.js";
+import {
+  handleEqlCommand,
+  handleRosterLinkCommand,
+} from "./handler.js";
 import { UsageStore, isChannelPrivileged } from "./usage.js";
 
 const lastReplyAt = new Map<string, number>();
@@ -44,10 +47,12 @@ async function main(): Promise<void> {
     void (async () => {
       if (onCooldown(channel)) return;
 
-      const reply = await handleEqlCommand(message, config.prefix, {
-        usage,
-        isPrivileged: isChannelPrivileged(channel, tags),
-      });
+      const reply =
+        (await handleRosterLinkCommand(message, { usage })) ??
+        (await handleEqlCommand(message, config.prefix, {
+          usage,
+          isPrivileged: isChannelPrivileged(channel, tags),
+        }));
       if (!reply) return;
 
       if (onCooldown(channel)) return;

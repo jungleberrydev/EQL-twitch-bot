@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { parseEqlCommand, parseRosterLinkCommand } from "./handler.js";
 import {
+  ROSTER_LINK_REPLY,
   TWITCH_MSG_LIMIT,
   clampChat,
   flattenWikiText,
   formatAmbiguousChat,
   formatLookupReply,
 } from "./format.js";
-import { parseEqlCommand } from "./handler.js";
 
 describe("flattenWikiText", () => {
   it("collapses newlines and strips light markdown", () => {
@@ -112,5 +113,34 @@ describe("parseEqlCommand", () => {
   it("ignores unrelated chat", () => {
     assert.equal(parseEqlCommand("hello there", prefix), null);
     assert.equal(parseEqlCommand("!item SoulFire", prefix), null);
+  });
+});
+
+describe("parseRosterLinkCommand", () => {
+  it("parses !magelo and !roster case-insensitively", () => {
+    assert.deepEqual(parseRosterLinkCommand("!magelo"), { kind: "magelo" });
+    assert.deepEqual(parseRosterLinkCommand("!MAGELO"), { kind: "magelo" });
+    assert.deepEqual(parseRosterLinkCommand("!roster"), { kind: "roster" });
+    assert.deepEqual(parseRosterLinkCommand("  !Roster  "), { kind: "roster" });
+  });
+
+  it("accepts optional trailing args", () => {
+    assert.deepEqual(parseRosterLinkCommand("!magelo please"), {
+      kind: "magelo",
+    });
+    assert.deepEqual(parseRosterLinkCommand("!roster sheets"), {
+      kind: "roster",
+    });
+  });
+
+  it("ignores unrelated chat", () => {
+    assert.equal(parseRosterLinkCommand("!eql help"), null);
+    assert.equal(parseRosterLinkCommand("magelo"), null);
+    assert.equal(parseRosterLinkCommand("!magelos"), null);
+  });
+
+  it("uses the shared short reply text", () => {
+    assert.ok(ROSTER_LINK_REPLY.includes("https://norrathroster.com"));
+    assert.ok(ROSTER_LINK_REPLY.length <= TWITCH_MSG_LIMIT);
   });
 });

@@ -117,3 +117,26 @@ describe("parseEqlCommand stats", () => {
     assert.deepEqual(parseEqlCommand("!eql usage", "!eql"), { kind: "stats" });
   });
 });
+
+describe("magelo and roster usage kinds", () => {
+  it("bumps magelo/roster and total", () => {
+    let counts = emptyCounts();
+    counts = incrementCounts(counts, "magelo");
+    counts = incrementCounts(counts, "roster");
+    assert.equal(counts.magelo, 1);
+    assert.equal(counts.roster, 1);
+    assert.equal(counts.total, 2);
+  });
+
+  it("includes magelo and roster in stats output", () => {
+    const counts = {
+      ...emptyCounts(),
+      total: 3,
+      magelo: 2,
+      roster: 1,
+    };
+    const out = formatUsageStats(counts);
+    assert.match(out, /magelo: 2/);
+    assert.match(out, /roster: 1/);
+  });
+});

@@ -8,11 +8,13 @@ import {
 } from "./eqlwiki.js";
 import {
   HELP_TEXT,
+  ROSTER_LINK_REPLY,
   formatAmbiguousChat,
   formatLookupReply,
 } from "./format.js";
 import {
   UsageStore,
+  emptyCounts,
   formatUsageStats,
   usageKindFromType,
   type UsageKind,
@@ -32,6 +34,10 @@ const TYPED = new Set([
   "usage",
 ]);
 
+/** Standalone chat triggers that share the Norrath Roster link reply. */
+export const ROSTER_LINK_COMMANDS = ["magelo", "roster"] as const;
+export type RosterLinkCommand = (typeof ROSTER_LINK_COMMANDS)[number];
+
 export type ParsedEqlCommand =
   | { kind: "help" }
   | { kind: "stats" }
@@ -44,6 +50,37 @@ export type HandleEqlOptions = {
   /** Broadcaster or mod — required for !eql stats. */
   isPrivileged?: boolean;
 };
+
+/**
+ * Parse standalone `!magelo` / `!roster` (case-insensitive).
+ * Optional trailing args are accepted and ignored.
+ */
+export function parseRosterLinkCommand(
+  message: string,
+): { kind: RosterLinkCommand } | null {
+  const trimmed = message.trim();
+  if (!trimmed) return null;
+  const lower = trimmed.toLowerCase();
+  for (const cmd of ROSTER_LINK_COMMANDS) {
+    const bang = `!${cmd}`;
+    if (lower === bang) return { kind: cmd };
+    if (lower.startsWith(`${bang} `) || lower.startsWith(`${bang}\t`)) {
+      return { kind: cmd };
+    }
+  }
+  return null;
+}
+
+/** Handle `!magelo` / `!roster`; returns a chat reply or null if ignored. */
+export async function handleRosterLinkCommand(
+  message: string,
+  opts: { usage?: UsageStore } = {},
+): Promise<string | null> {
+  const parsed = parseRosterLinkCommand(message);
+  if (!parsed) return null;
+  recordUsage(opts.usage, parsed.kind);
+  return ROSTER_LINK_REPLY;
+}
 
 /**
  * Parse a chat message against the bot prefix.
@@ -227,17 +264,7 @@ export async function handleEqlCommand(
     if (!opts.isPrivileged) {
       return "Only the broadcaster or mods can use !eql stats.";
     }
-    const counts = opts.usage?.getCounts() ?? {
-      item: 0,
-      mob: 0,
-      zone: 0,
-      spell: 0,
-      faction: 0,
-      wiki: 0,
-      help: 0,
-      unknown: 0,
-      total: 0,
-    };
+    const counts = opts.usage?.getCounts() ?? emptyCounts();
     return formatUsageStats(counts);
   }
 

@@ -10,6 +10,8 @@ export const USAGE_KINDS = [
   "faction",
   "wiki",
   "help",
+  "magelo",
+  "roster",
   "unknown",
 ] as const;
 
@@ -28,6 +30,8 @@ export function emptyCounts(): UsageCounts {
     faction: 0,
     wiki: 0,
     help: 0,
+    magelo: 0,
+    roster: 0,
     unknown: 0,
     total: 0,
   };
@@ -63,7 +67,7 @@ export function formatUsageStats(
     (k) => k !== "unknown" || (counts.unknown ?? 0) > 0,
   );
   const parts = kinds.map((k) => `${k}: ${counts[k] ?? 0}`);
-  // Lead with total (every handled !eql increments it), then per-type breakdown.
+  // Lead with total (every handled command increments it), then per-type breakdown.
   const body = `EQLwiki usage — total: ${counts.total ?? 0} | ${parts.join(" | ")}`;
   return clampChat(body, limit);
 }

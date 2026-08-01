@@ -77,5 +77,9 @@ export function formatAmbiguousChat(
 }
 
 export const HELP_TEXT = clampChat(
-  "EQLwiki: !eql item|mob|zone|spell|faction <name> — or !eql <query> for a general lookup",
+  "EQLwiki: !eql item|mob|zone|spell|faction <name> — or !eql <query>. Character sheets: !magelo or !roster",
 );
+
+/** Shared reply for !magelo / !roster. */
+export const ROSTER_LINK_REPLY =
+  "Character sheets: https://norrathroster.com";
