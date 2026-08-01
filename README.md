@@ -112,15 +112,32 @@ npm run dev
 
 You should see a “Connected … as …” log. In that channel’s chat: `!eql item SoulFire`.
 
-### 7. Deploy later (optional)
+### 7. Deploy to Lightsail (same host as Chronicler)
 
-Same image/env on any host (including Lightsail beside Chronicler):
+Production runs on the Chronicler Lightsail box as a **separate** Compose stack (`~/EQL-twitch-bot`), not inside the berrybot compose file.
+
+From your Mac (needs `~/.ssh/lightsail/berrybot.pem` + a filled local `.env`):
 
 ```bash
-docker compose up -d --build
+cd ~/projects/EQL-twitch-bot
+npm run deploy
+# or: bash scripts/deploy.sh
 ```
 
-Keep `.env` on the server only — never commit it.
+That rsyncs code, scp’s `.env`, and runs `docker compose up -d --build` on the server.
+
+Manual equivalent:
+
+```bash
+rsync -az --delete --exclude node_modules --exclude dist --exclude .git --exclude .env \
+  -e "ssh -i ~/.ssh/lightsail/berrybot.pem" \
+  ./ ubuntu@52.45.134.246:~/EQL-twitch-bot/
+scp -i ~/.ssh/lightsail/berrybot.pem .env ubuntu@52.45.134.246:~/EQL-twitch-bot/.env
+ssh -i ~/.ssh/lightsail/berrybot.pem ubuntu@52.45.134.246 \
+  'cd ~/EQL-twitch-bot && docker compose up -d --build && docker compose logs --tail=40'
+```
+
+Keep `.env` off git. Rebuild after code or token changes with `npm run deploy` again.
 
 ## Env reference
 
