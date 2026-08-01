@@ -133,6 +133,8 @@ npm run deploy
 
 That rsyncs code, scp’s `.env`, and runs `docker compose up -d --build` on the server.
 
+Before deploy, cut a release if `[Unreleased]` has notes: promote them to a dated version in `CHANGELOG.md` and bump `package.json` (patch for fixes, minor for features).
+
 Manual equivalent:
 
 ```bash

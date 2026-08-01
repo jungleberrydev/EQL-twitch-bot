@@ -1,0 +1,15 @@
+---
+description: Cut a changelog + package.json release when shipping to production
+alwaysApply: true
+---
+
+# Release on ship
+
+When merging work that will be (or was just) deployed to production:
+
+1. If `CHANGELOG.md` `[Unreleased]` has entries, promote them into a new dated version section (Keep a Changelog).
+2. Bump `package.json` `version` to match (patch for fixes, minor for features, major for breaking).
+3. Leave an empty `## [Unreleased]` section at the top for the next work.
+4. Commit the release cut (message like `Release x.y.z: promote Unreleased changelog and bump version.`) before or with the deploy.
+
+Do not leave shipped changes sitting only under `[Unreleased]`.

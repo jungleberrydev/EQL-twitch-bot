@@ -3,9 +3,13 @@
 All notable changes to eql-twitch-bot are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-Version numbers match `package.json` when cut; otherwise newer work lands under Unreleased.
+Version numbers match `package.json`. When shipping work to production (merge + deploy),
+cut a release in the same change set: promote `[Unreleased]` notes into a dated version
+section and bump `package.json`. Use `[Unreleased]` only while work is still in progress.
 
 ## [Unreleased]
+
+## [1.1.1] - 2026-08-01
 
 ### Fixed
 
