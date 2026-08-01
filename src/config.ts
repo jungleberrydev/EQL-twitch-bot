@@ -1,3 +1,4 @@
+import path from "node:path";
 import "dotenv/config";
 
 function required(name: string): string {
@@ -36,6 +37,8 @@ if (channels.length === 0) {
   );
 }
 
+const dataDir = optional("DATA_DIR") ?? "./data";
+
 export const config = {
   username: required("TWITCH_USERNAME").toLowerCase(),
   oauthToken: normalizeOauthToken(required("TWITCH_OAUTH_TOKEN")),
@@ -47,4 +50,8 @@ export const config = {
   prefix: (optional("TWITCH_PREFIX") ?? "!eql").toLowerCase(),
   /** Minimum ms between bot replies in the same channel. */
   cooldownMs: Number(process.env.TWITCH_COOLDOWN_MS || 2500),
+  /** Directory for durable bot data (mounted volume in Docker). */
+  dataDir,
+  /** JSON file for !eql command usage counters. */
+  usageDbPath: optional("USAGE_DB_PATH") ?? path.join(dataDir, "usage.json"),
 };

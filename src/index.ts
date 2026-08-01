@@ -1,8 +1,10 @@
 import tmi from "tmi.js";
 import { config } from "./config.js";
 import { handleEqlCommand } from "./handler.js";
+import { UsageStore, isChannelPrivileged } from "./usage.js";
 
 const lastReplyAt = new Map<string, number>();
+const usage = new UsageStore(config.usageDbPath);
 
 function onCooldown(channel: string): boolean {
   const now = Date.now();
@@ -15,6 +17,8 @@ function markReplied(channel: string): void {
 }
 
 async function main(): Promise<void> {
+  console.log(`Usage stats file: ${config.usageDbPath}`);
+
   const client = new tmi.Client({
     options: { skipUpdatingEmotesets: true },
     connection: { reconnect: true, secure: true },
@@ -40,7 +44,10 @@ async function main(): Promise<void> {
     void (async () => {
       if (onCooldown(channel)) return;
 
-      const reply = await handleEqlCommand(message, config.prefix);
+      const reply = await handleEqlCommand(message, config.prefix, {
+        usage,
+        isPrivileged: isChannelPrivileged(channel, tags),
+      });
       if (!reply) return;
 
       if (onCooldown(channel)) return;

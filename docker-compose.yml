@@ -4,3 +4,8 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      DATA_DIR: /app/data
+    volumes:
+      # Survives container rebuilds; rsync --exclude data keeps host ./data
+      - ./data:/app/data

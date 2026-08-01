@@ -11,6 +11,12 @@ import {
   formatAmbiguousChat,
   formatLookupReply,
 } from "./format.js";
+import {
+  UsageStore,
+  formatUsageStats,
+  usageKindFromType,
+  type UsageKind,
+} from "./usage.js";
 
 const TYPED = new Set([
   "item",
@@ -22,13 +28,22 @@ const TYPED = new Set([
   "wiki",
   "help",
   "commands",
+  "stats",
+  "usage",
 ]);
 
 export type ParsedEqlCommand =
   | { kind: "help" }
+  | { kind: "stats" }
   | { kind: "typed"; type: string; query: string }
   | { kind: "wiki"; query: string }
   | null;
+
+export type HandleEqlOptions = {
+  usage?: UsageStore;
+  /** Broadcaster or mod — required for !eql stats. */
+  isPrivileged?: boolean;
+};
 
 /**
  * Parse a chat message against the bot prefix.
@@ -36,6 +51,7 @@ export type ParsedEqlCommand =
  *   !eql help
  *   !eql item SoulFire
  *   !eql SoulFire
+ *   !eql stats
  */
 export function parseEqlCommand(
   message: string,
@@ -48,6 +64,9 @@ export function parseEqlCommand(
   const lower = trimmed.toLowerCase();
   if (lower === p || lower === `${p} help` || lower === `${p} commands`) {
     return { kind: "help" };
+  }
+  if (lower === `${p} stats` || lower === `${p} usage`) {
+    return { kind: "stats" };
   }
 
   if (!lower.startsWith(`${p} `) && !lower.startsWith(`${p}\t`)) {
@@ -65,6 +84,10 @@ export function parseEqlCommand(
     return { kind: "help" };
   }
 
+  if (first === "stats" || first === "usage") {
+    return { kind: "stats" };
+  }
+
   if (TYPED.has(first)) {
     if (!remainder) {
       return { kind: "help" };
@@ -74,6 +97,15 @@ export function parseEqlCommand(
   }
 
   return { kind: "wiki", query: rest };
+}
+
+function recordUsage(usage: UsageStore | undefined, kind: UsageKind): void {
+  if (!usage) return;
+  try {
+    usage.increment(kind);
+  } catch (err) {
+    console.error("Failed to record usage:", err);
+  }
 }
 
 async function runTypedLookup(type: string, query: string): Promise<string> {
@@ -186,18 +218,40 @@ async function runTypedLookup(type: string, query: string): Promise<string> {
 export async function handleEqlCommand(
   message: string,
   prefix: string,
+  opts: HandleEqlOptions = {},
 ): Promise<string | null> {
   const parsed = parseEqlCommand(message, prefix);
   if (!parsed) return null;
 
+  if (parsed.kind === "stats") {
+    if (!opts.isPrivileged) {
+      return "Only the broadcaster or mods can use !eql stats.";
+    }
+    const counts = opts.usage?.getCounts() ?? {
+      item: 0,
+      mob: 0,
+      zone: 0,
+      spell: 0,
+      faction: 0,
+      wiki: 0,
+      help: 0,
+      unknown: 0,
+      total: 0,
+    };
+    return formatUsageStats(counts);
+  }
+
   if (parsed.kind === "help") {
+    recordUsage(opts.usage, "help");
     return HELP_TEXT;
   }
 
   try {
     if (parsed.kind === "typed") {
+      recordUsage(opts.usage, usageKindFromType(parsed.type));
       return await runTypedLookup(parsed.type, parsed.query);
     }
+    recordUsage(opts.usage, "wiki");
     return await runTypedLookup("wiki", parsed.query);
   } catch (err) {
     console.error("EQLwiki lookup failed:", err);

@@ -15,9 +15,13 @@ Prefix defaults to `!eql`:
 | `!eql faction Guards of Qeynos` | Faction lookup |
 | `!eql SoulFire` | General wiki lookup |
 | `!eql help` | Short usage blurb |
+| `!eql stats` | Command usage counts (broadcaster/mods only; alias `usage`) |
 
 Replies are plain text plus a wiki link (Twitch has no embeds).
 
+### Usage stats
+
+Every handled `!eql` (lookups, help, not-found) increments a counter persisted in JSON under `DATA_DIR` (default `./data/usage.json`). Docker mounts `./data:/app/data` so counts survive redeploys. In chat, mods/broadcaster can run `!eql stats` for a short summary.
 ## Quick start (after you have a token)
 
 ```bash
@@ -129,7 +133,7 @@ That rsyncs code, scp’s `.env`, and runs `docker compose up -d --build` on the
 Manual equivalent:
 
 ```bash
-rsync -az --delete --exclude node_modules --exclude dist --exclude .git --exclude .env \
+rsync -az --delete --exclude node_modules --exclude dist --exclude .git --exclude .env --exclude data \
   -e "ssh -i ~/.ssh/lightsail/berrybot.pem" \
   ./ ubuntu@52.45.134.246:~/EQL-twitch-bot/
 scp -i ~/.ssh/lightsail/berrybot.pem .env ubuntu@52.45.134.246:~/EQL-twitch-bot/.env
@@ -148,6 +152,8 @@ Keep `.env` off git. Rebuild after code or token changes with `npm run deploy` a
 | `TWITCH_CHANNELS` | yes | Comma-separated channels to join |
 | `TWITCH_PREFIX` | no | Default `!eql` |
 | `TWITCH_COOLDOWN_MS` | no | Default `2500` between replies per channel |
+| `DATA_DIR` | no | Default `./data` (Docker: `/app/data`) |
+| `USAGE_DB_PATH` | no | Default `$DATA_DIR/usage.json` |
 
 ## Scripts
 

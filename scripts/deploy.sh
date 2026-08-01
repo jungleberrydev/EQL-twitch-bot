@@ -43,6 +43,7 @@ RSYNC=(rsync -az --delete
   --exclude dist
   --exclude .git
   --exclude .env
+  --exclude data
   --exclude '*.log'
   -e "ssh -i $KEY -o StrictHostKeyChecking=accept-new"
 )
