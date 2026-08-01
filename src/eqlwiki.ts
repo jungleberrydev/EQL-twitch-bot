@@ -342,9 +342,26 @@ export function parseItemCapacity(statsblock: string): number | null {
   return n;
 }
 
+/**
+ * Expand `{{SpellHoverLink|Page}}` / `{{SpellHoverLink|Page|Label}}` into
+ * wiki links. Named args like `class=Cleric` are ignored (not a display label).
+ */
+export function expandSpellHoverLinks(raw: string): string {
+  return raw.replace(
+    /\{\{\s*SpellHoverLink\s*\|\s*([^|{}]+?)(?:\s*\|\s*([^|{}]*?))?\s*\}\}/gi,
+    (_m, page: string, second?: string) => {
+      const title = page.trim();
+      if (!title) return "";
+      const label = second?.trim();
+      if (label && !label.includes("=")) return `[[${title}|${label}]]`;
+      return `[[${title}]]`;
+    },
+  );
+}
+
 /** Convert wiki/HTML fragments into Discord-friendly text. */
 export function cleanStatsblock(raw: string): string {
-  let text = raw;
+  let text = expandSpellHoverLinks(raw);
 
   // <br> often already sits before a newline in wikitext — collapse to one break
   text = text.replace(/<br\s*\/?>\s*/gi, "\n");

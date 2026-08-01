@@ -7,6 +7,10 @@ Version numbers match `package.json` when cut; otherwise newer work lands under 
 
 ## [Unreleased]
 
+### Fixed
+
+- Expand `{{SpellHoverLink|…}}` wiki templates in spell (and other) summaries so chat shows the spell name instead of raw template text.
+
 ## [1.1.0] - 2026-08-01
 
 ### Added
