@@ -9,6 +9,10 @@ section and bump `package.json`. Use `[Unreleased]` only while work is still in 
 
 ## [Unreleased]
 
+### Changed
+
+- Default chat command prefix is now `!eqlwiki` (was `!eql`). Override with `TWITCH_PREFIX` if needed.
+
 ## [1.1.1] - 2026-08-01
 
 ### Fixed

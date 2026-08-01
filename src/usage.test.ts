@@ -113,8 +113,12 @@ describe("UsageStore", () => {
 
 describe("parseEqlCommand stats", () => {
   it("parses stats and usage aliases", () => {
-    assert.deepEqual(parseEqlCommand("!eql stats", "!eql"), { kind: "stats" });
-    assert.deepEqual(parseEqlCommand("!eql usage", "!eql"), { kind: "stats" });
+    assert.deepEqual(parseEqlCommand("!eqlwiki stats", "!eqlwiki"), {
+      kind: "stats",
+    });
+    assert.deepEqual(parseEqlCommand("!eqlwiki usage", "!eqlwiki"), {
+      kind: "stats",
+    });
   });
 });
 

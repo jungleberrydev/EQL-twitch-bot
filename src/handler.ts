@@ -55,7 +55,7 @@ export type ParsedEqlCommand =
 
 export type HandleEqlOptions = {
   usage?: UsageStore;
-  /** Broadcaster or mod — required for !eql stats. */
+  /** Broadcaster or mod — required for !eqlwiki stats. */
   isPrivileged?: boolean;
 };
 
@@ -136,11 +136,11 @@ export async function handleRosterLinkCommand(
 
 /**
  * Parse a chat message against the bot prefix.
- * Examples (prefix `!eql`):
- *   !eql help
- *   !eql item SoulFire
- *   !eql SoulFire
- *   !eql stats
+ * Examples (prefix `!eqlwiki`):
+ *   !eqlwiki help
+ *   !eqlwiki item SoulFire
+ *   !eqlwiki SoulFire
+ *   !eqlwiki stats
  */
 export function parseEqlCommand(
   message: string,
@@ -206,7 +206,7 @@ async function runTypedLookup(type: string, query: string): Promise<string> {
           return formatAmbiguousChat(query, result.suggestions);
         }
         if (result.reason === "not_item") {
-          return `Found ${result.suggestions?.[0] ?? query} on EQLwiki, but it is not an item. Try !eql wiki or !eql mob / !eql zone.`;
+          return `Found ${result.suggestions?.[0] ?? query} on EQLwiki, but it is not an item. Try !eqlwiki wiki or !eqlwiki mob / !eqlwiki zone.`;
         }
         return `No EQLwiki item found for ${query}.`;
       }
@@ -224,7 +224,7 @@ async function runTypedLookup(type: string, query: string): Promise<string> {
           return formatAmbiguousChat(query, result.suggestions);
         }
         if (result.reason === "not_mob") {
-          return `Found ${result.suggestions?.[0] ?? query}, but it is not an NPC/mob page. Try !eql wiki or !eql item.`;
+          return `Found ${result.suggestions?.[0] ?? query}, but it is not an NPC/mob page. Try !eqlwiki wiki or !eqlwiki item.`;
         }
         return `No EQLwiki mob found for ${query}.`;
       }
@@ -241,7 +241,7 @@ async function runTypedLookup(type: string, query: string): Promise<string> {
           return formatAmbiguousChat(query, result.suggestions);
         }
         if (result.reason === "not_zone") {
-          return `Found ${result.suggestions?.[0] ?? query}, but it is not a zone page. Try !eql wiki.`;
+          return `Found ${result.suggestions?.[0] ?? query}, but it is not a zone page. Try !eqlwiki wiki.`;
         }
         return `No EQLwiki zone found for ${query}.`;
       }
@@ -258,7 +258,7 @@ async function runTypedLookup(type: string, query: string): Promise<string> {
           return formatAmbiguousChat(query, result.suggestions);
         }
         if (result.reason === "not_spell") {
-          return `Found ${result.suggestions?.[0] ?? query}, but it is not a spell page. Try !eql wiki.`;
+          return `Found ${result.suggestions?.[0] ?? query}, but it is not a spell page. Try !eqlwiki wiki.`;
         }
         return `No EQLwiki spell found for ${query}.`;
       }
@@ -275,7 +275,7 @@ async function runTypedLookup(type: string, query: string): Promise<string> {
           return formatAmbiguousChat(query, result.suggestions);
         }
         if (result.reason === "not_faction") {
-          return `Found ${result.suggestions?.[0] ?? query}, but it is not a faction page. Try !eql wiki.`;
+          return `Found ${result.suggestions?.[0] ?? query}, but it is not a faction page. Try !eqlwiki wiki.`;
         }
         return `No EQLwiki faction found for ${query}.`;
       }
@@ -314,7 +314,7 @@ export async function handleEqlCommand(
 
   if (parsed.kind === "stats") {
     if (!opts.isPrivileged) {
-      return "Only the broadcaster or mods can use !eql stats.";
+      return "Only the broadcaster or mods can use !eqlwiki stats.";
     }
     const counts = opts.usage?.getCounts() ?? emptyCounts();
     return formatUsageStats(counts);

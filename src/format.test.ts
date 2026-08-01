@@ -80,10 +80,10 @@ describe("clampChat", () => {
 });
 
 describe("parseEqlCommand", () => {
-  const prefix = "!eql";
+  const prefix = "!eqlwiki";
 
   it("parses typed item lookup", () => {
-    assert.deepEqual(parseEqlCommand("!eql item SoulFire", prefix), {
+    assert.deepEqual(parseEqlCommand("!eqlwiki item SoulFire", prefix), {
       kind: "typed",
       type: "item",
       query: "SoulFire",
@@ -91,7 +91,7 @@ describe("parseEqlCommand", () => {
   });
 
   it("maps npc to mob", () => {
-    assert.deepEqual(parseEqlCommand("!eql npc a gnoll", prefix), {
+    assert.deepEqual(parseEqlCommand("!eqlwiki npc a gnoll", prefix), {
       kind: "typed",
       type: "mob",
       query: "a gnoll",
@@ -99,15 +99,15 @@ describe("parseEqlCommand", () => {
   });
 
   it("treats bare query as wiki", () => {
-    assert.deepEqual(parseEqlCommand("!eql SoulFire", prefix), {
+    assert.deepEqual(parseEqlCommand("!eqlwiki SoulFire", prefix), {
       kind: "wiki",
       query: "SoulFire",
     });
   });
 
   it("returns help", () => {
-    assert.deepEqual(parseEqlCommand("!eql", prefix), { kind: "help" });
-    assert.deepEqual(parseEqlCommand("!eql help", prefix), { kind: "help" });
+    assert.deepEqual(parseEqlCommand("!eqlwiki", prefix), { kind: "help" });
+    assert.deepEqual(parseEqlCommand("!eqlwiki help", prefix), { kind: "help" });
   });
 
   it("ignores unrelated chat", () => {
@@ -137,7 +137,7 @@ describe("parseRosterLinkCommand", () => {
   });
 
   it("ignores unrelated chat", () => {
-    assert.equal(parseRosterLinkCommand("!eql help"), null);
+    assert.equal(parseRosterLinkCommand("!eqlwiki help"), null);
     assert.equal(parseRosterLinkCommand("magelo"), null);
     assert.equal(parseRosterLinkCommand("!magelos"), null);
   });

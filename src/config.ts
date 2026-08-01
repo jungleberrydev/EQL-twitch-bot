@@ -44,14 +44,14 @@ export const config = {
   oauthToken: normalizeOauthToken(required("TWITCH_OAUTH_TOKEN")),
   channels,
   /**
-   * Chat command prefix. Default `!eql` so messages look like
-   * `!eql item SoulFire` or `!eql SoulFire`.
+   * Chat command prefix. Default `!eqlwiki` so messages look like
+   * `!eqlwiki item SoulFire` or `!eqlwiki SoulFire`.
    */
-  prefix: (optional("TWITCH_PREFIX") ?? "!eql").toLowerCase(),
+  prefix: (optional("TWITCH_PREFIX") ?? "!eqlwiki").toLowerCase(),
   /** Minimum ms between bot replies in the same channel. */
   cooldownMs: Number(process.env.TWITCH_COOLDOWN_MS || 2500),
   /** Directory for durable bot data (mounted volume in Docker). */
   dataDir,
-  /** JSON file for !eql command usage counters. */
+  /** JSON file for !eqlwiki command usage counters. */
   usageDbPath: optional("USAGE_DB_PATH") ?? path.join(dataDir, "usage.json"),
 };
