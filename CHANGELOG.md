@@ -7,6 +7,8 @@ Version numbers match `package.json` when cut; otherwise newer work lands under 
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-08-01
+
 ### Added
 
 - `!roster <name> <server>` / `!magelo <name> <server>` — look up a character via the Norrath Roster API and reply with the sheet URL when found.
