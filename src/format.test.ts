@@ -118,18 +118,21 @@ describe("parseEqlCommand", () => {
 
 describe("parseRosterLinkCommand", () => {
   it("parses !magelo and !roster case-insensitively", () => {
-    assert.deepEqual(parseRosterLinkCommand("!magelo"), { kind: "magelo" });
-    assert.deepEqual(parseRosterLinkCommand("!MAGELO"), { kind: "magelo" });
-    assert.deepEqual(parseRosterLinkCommand("!roster"), { kind: "roster" });
-    assert.deepEqual(parseRosterLinkCommand("  !Roster  "), { kind: "roster" });
-  });
-
-  it("accepts optional trailing args", () => {
-    assert.deepEqual(parseRosterLinkCommand("!magelo please"), {
+    assert.deepEqual(parseRosterLinkCommand("!magelo"), {
       kind: "magelo",
+      lookup: null,
     });
-    assert.deepEqual(parseRosterLinkCommand("!roster sheets"), {
+    assert.deepEqual(parseRosterLinkCommand("!MAGELO"), {
+      kind: "magelo",
+      lookup: null,
+    });
+    assert.deepEqual(parseRosterLinkCommand("!roster"), {
       kind: "roster",
+      lookup: null,
+    });
+    assert.deepEqual(parseRosterLinkCommand("  !Roster  "), {
+      kind: "roster",
+      lookup: null,
     });
   });
 

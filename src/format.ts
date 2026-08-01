@@ -62,6 +62,7 @@ export function formatAmbiguousChat(
   query: string,
   suggestions: string[],
   limit = TWITCH_MSG_LIMIT,
+  source = "EQLwiki",
 ): string {
   const list = suggestions
     .slice(0, 5)
@@ -70,16 +71,37 @@ export function formatAmbiguousChat(
     .join(", ");
   return clampChat(
     list
-      ? `Multiple EQLwiki matches for "${flattenWikiText(query)}": ${list}`
-      : `Multiple EQLwiki matches for "${flattenWikiText(query)}". Try a more specific name.`,
+      ? `Multiple ${source} matches for "${flattenWikiText(query)}": ${list}`
+      : `Multiple ${source} matches for "${flattenWikiText(query)}". Try a more specific name.`,
     limit,
   );
 }
 
 export const HELP_TEXT = clampChat(
-  "EQLwiki: !eql item|mob|zone|spell|faction <name> — or !eql <query>. Character sheets: !magelo or !roster",
+  "EQLwiki: !eql item|mob|zone|spell|faction <name> — or !eql <query>. Sheets: !roster <name> <server> (or !magelo)",
 );
 
-/** Shared reply for !magelo / !roster. */
+/** Shared reply for bare !magelo / !roster. */
 export const ROSTER_LINK_REPLY =
-  "Character sheets: https://norrathroster.com";
+  "Character sheets: https://norrathroster.com — lookup: !roster <name> <server>";
+
+export function formatRosterUsage(command: "magelo" | "roster"): string {
+  return clampChat(
+    `Usage: !${command} <name> <server> — or !${command} alone for https://norrathroster.com`,
+  );
+}
+
+export function formatRosterNotFound(
+  name: string,
+  serverName: string,
+): string {
+  return clampChat(
+    `No Norrath Roster sheet for ${flattenWikiText(name)} on ${flattenWikiText(serverName)}.`,
+  );
+}
+
+export function formatRosterInvalidServer(serverInput: string): string {
+  return clampChat(
+    `Unknown server "${flattenWikiText(serverInput)}". Try: qeynos, freeport, oggok, neriak, rivervale, halas, erudin, paineel`,
+  );
+}

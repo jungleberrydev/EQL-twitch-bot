@@ -16,8 +16,9 @@ Prefix defaults to `!eql`:
 | `!eql SoulFire` | General wiki lookup |
 | `!eql help` | Short usage blurb |
 | `!eql stats` | Command usage counts (broadcaster/mods only; alias `usage`) |
-| `!magelo` | Link to [Norrath Roster](https://norrathroster.com) character sheets |
-| `!roster` | Same as `!magelo` |
+| `!magelo` | Same as `!roster` |
+| `!roster` | Link to [Norrath Roster](https://norrathroster.com); `!roster <name> <server>` opens a sheet |
+| `!roster Flesh freeport` | Direct character sheet link when the name exists on that server |
 
 Replies are plain text plus a wiki link (Twitch has no embeds).
 

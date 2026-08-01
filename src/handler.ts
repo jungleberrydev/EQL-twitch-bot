@@ -11,7 +11,15 @@ import {
   ROSTER_LINK_REPLY,
   formatAmbiguousChat,
   formatLookupReply,
+  formatRosterInvalidServer,
+  formatRosterNotFound,
+  formatRosterUsage,
 } from "./format.js";
+import {
+  characterSheetUrl,
+  lookupCharacter,
+  resolveServer,
+} from "./norrathroster.js";
 import {
   UsageStore,
   emptyCounts,
@@ -51,21 +59,34 @@ export type HandleEqlOptions = {
   isPrivileged?: boolean;
 };
 
+export type ParsedRosterLinkCommand =
+  | { kind: RosterLinkCommand; lookup: null }
+  | { kind: RosterLinkCommand; lookup: "incomplete" }
+  | { kind: RosterLinkCommand; lookup: { name: string; server: string } };
+
 /**
  * Parse standalone `!magelo` / `!roster` (case-insensitive).
- * Optional trailing args are accepted and ignored.
+ * With args: `!roster <name> <server>` (server is the last token).
  */
 export function parseRosterLinkCommand(
   message: string,
-): { kind: RosterLinkCommand } | null {
+): ParsedRosterLinkCommand | null {
   const trimmed = message.trim();
   if (!trimmed) return null;
   const lower = trimmed.toLowerCase();
   for (const cmd of ROSTER_LINK_COMMANDS) {
     const bang = `!${cmd}`;
-    if (lower === bang) return { kind: cmd };
+    if (lower === bang) return { kind: cmd, lookup: null };
     if (lower.startsWith(`${bang} `) || lower.startsWith(`${bang}\t`)) {
-      return { kind: cmd };
+      const rest = trimmed.slice(bang.length).trim();
+      if (!rest) return { kind: cmd, lookup: null };
+      const parts = rest.split(/\s+/).filter(Boolean);
+      if (parts.length < 2) {
+        return { kind: cmd, lookup: "incomplete" };
+      }
+      const server = parts[parts.length - 1]!;
+      const name = parts.slice(0, -1).join(" ");
+      return { kind: cmd, lookup: { name, server } };
     }
   }
   return null;
@@ -79,7 +100,38 @@ export async function handleRosterLinkCommand(
   const parsed = parseRosterLinkCommand(message);
   if (!parsed) return null;
   recordUsage(opts.usage, parsed.kind);
-  return ROSTER_LINK_REPLY;
+
+  if (parsed.lookup === null) {
+    return ROSTER_LINK_REPLY;
+  }
+  if (parsed.lookup === "incomplete") {
+    return formatRosterUsage(parsed.kind);
+  }
+
+  const { name, server } = parsed.lookup;
+  try {
+    const result = await lookupCharacter(name, server);
+    if (!result.ok) {
+      if (result.reason === "invalid_server") {
+        return formatRosterInvalidServer(server);
+      }
+      if (result.reason === "ambiguous" && result.suggestions?.length) {
+        return formatAmbiguousChat(name, result.suggestions, undefined, "roster");
+      }
+      const known = resolveServer(server);
+      return formatRosterNotFound(name, known?.name ?? server);
+    }
+
+    const sheet = result.character;
+    return formatLookupReply({
+      name: `${sheet.name} (${sheet.serverName})`,
+      description: sheet.classSummary,
+      pageUrl: characterSheetUrl(sheet.id),
+    });
+  } catch (err) {
+    console.error("Norrath Roster lookup failed:", err);
+    return "Failed to reach Norrath Roster. Try again in a moment.";
+  }
 }
 
 /**
