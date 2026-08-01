@@ -5,17 +5,43 @@ import {
   ROSTER_LINK_REPLY,
   TWITCH_MSG_LIMIT,
   clampChat,
+  extractEffectLinks,
   flattenWikiText,
   formatAmbiguousChat,
   formatLookupReply,
 } from "./format.js";
 
 describe("flattenWikiText", () => {
-  it("collapses newlines and strips light markdown", () => {
+  it("collapses newlines and keeps http markdown links as bare URLs", () => {
     assert.equal(
-      flattenWikiText("**SoulFire**\nAC: 0\n[wiki](https://x)"),
-      "SoulFire AC: 0 wiki",
+      flattenWikiText("**SoulFire**\nAC: 0\n[wiki](https://x.example/page)"),
+      "SoulFire AC: 0 wiki https://x.example/page",
     );
+  });
+
+  it("preserves underscores inside wiki URLs", () => {
+    assert.equal(
+      flattenWikiText(
+        "Effect: [Promised Renewal](https://eqlwiki.com/Promised_Renewal)",
+      ),
+      "Effect: Promised Renewal https://eqlwiki.com/Promised_Renewal",
+    );
+  });
+});
+
+describe("extractEffectLinks", () => {
+  it("pulls spell links from Effect: lines only", () => {
+    const stats = [
+      "Slot: PRIMARY",
+      "Effect: [Promised Renewal](https://eqlwiki.com/Promised_Renewal) (Any Slot)",
+      "Loot: [Iron Ration](https://eqlwiki.com/Iron_Ration)",
+    ].join("\n");
+    assert.deepEqual(extractEffectLinks(stats), [
+      {
+        label: "Promised Renewal",
+        url: "https://eqlwiki.com/Promised_Renewal",
+      },
+    ]);
   });
 });
 
@@ -28,6 +54,40 @@ describe("formatLookupReply", () => {
       pageUrl: url,
     });
     assert.equal(out, `SoulFire: ${url} — A fire spell`);
+  });
+
+  it("lists item Effect: spell links beside the item URL", () => {
+    const itemUrl = "https://eqlwiki.com/SoulFire";
+    const effectUrl = "https://eqlwiki.com/Promised_Renewal";
+    const out = formatLookupReply({
+      name: "SoulFire",
+      description: [
+        "Slot: PRIMARY SECONDARY",
+        `Effect: [Promised Renewal](${effectUrl}) (Any Slot/Can Equip, Casting Time: Instant)`,
+        "WT: 0.0 Size: TINY",
+      ].join("\n"),
+      pageUrl: itemUrl,
+    });
+    assert.ok(out.startsWith(`SoulFire: ${itemUrl} | Promised Renewal: ${effectUrl}`));
+    assert.match(out, /Effect: Promised Renewal \(Any Slot/);
+    assert.ok(!out.includes(`${effectUrl} (Any`));
+  });
+
+  it("keeps Effect: URLs when truncating the stats summary", () => {
+    const itemUrl = "https://eqlwiki.com/SoulFire";
+    const effectUrl = "https://eqlwiki.com/Promised_Renewal";
+    const out = formatLookupReply({
+      name: "SoulFire",
+      description: [
+        `Effect: [Promised Renewal](${effectUrl})`,
+        "A".repeat(600),
+      ].join("\n"),
+      pageUrl: itemUrl,
+      limit: 120,
+    });
+    assert.ok(out.includes(itemUrl));
+    assert.ok(out.includes(effectUrl));
+    assert.ok(out.length <= 120);
   });
 
   it("keeps the URL when truncating", () => {
@@ -76,6 +136,13 @@ describe("formatAmbiguousChat", () => {
 describe("clampChat", () => {
   it("adds an ellipsis when over limit", () => {
     assert.equal(clampChat("abcdef", 4), "abc…");
+  });
+
+  it("does not leave a truncated URL stump", () => {
+    const out = clampChat("stats https://eqlwiki.com/Promised_Renewal more", 30);
+    assert.ok(!out.includes("https://eqlwiki.com/Promi"));
+    assert.ok(out.endsWith("…"));
+    assert.ok(out.length <= 30);
   });
 });
 
