@@ -1,6 +1,6 @@
 # eql-twitch-bot
 
-Tiny Twitch chat bot for [EQLwiki](https://eqlwiki.com) lookups. Sibling to The Chronicler Discord bot’s wiki commands — not part of that repo.
+Tiny Twitch chat bot for [EQLwiki](https://eqlwiki.com) lookups. Sibling to The Chronicler Discord bot’s wiki commands — not part of that repo. See [CHANGELOG.md](CHANGELOG.md) for recent changes.
 
 ## Chat commands
 
