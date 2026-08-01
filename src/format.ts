@@ -78,7 +78,7 @@ export function formatAmbiguousChat(
 }
 
 export const HELP_TEXT = clampChat(
-  "EQLwiki: !eql item|mob|zone|spell|faction <name> — or !eql <query>. Sheets: !roster <name> <server> (or !magelo)",
+  "EQLwiki: !eqlwiki item|mob|zone|spell|faction <name> — or !eqlwiki <query>. Sheets: !roster <name> <server> (or !magelo)",
 );
 
 /** Shared reply for bare !magelo / !roster. */

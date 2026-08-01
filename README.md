@@ -4,18 +4,18 @@ Tiny Twitch chat bot for [EQLwiki](https://eqlwiki.com) lookups. Sibling to The 
 
 ## Chat commands
 
-Prefix defaults to `!eql`:
+Prefix defaults to `!eqlwiki`:
 
 | Command | What it does |
 |---------|----------------|
-| `!eql item SoulFire` | Item lookup |
-| `!eql mob a gnoll` | NPC / mob lookup (`npc` also works) |
-| `!eql zone West Freeport` | Zone lookup |
-| `!eql spell Complete Healing` | Spell lookup |
-| `!eql faction Guards of Qeynos` | Faction lookup |
-| `!eql SoulFire` | General wiki lookup |
-| `!eql help` | Short usage blurb |
-| `!eql stats` | Command usage counts (broadcaster/mods only; alias `usage`) |
+| `!eqlwiki item SoulFire` | Item lookup |
+| `!eqlwiki mob a gnoll` | NPC / mob lookup (`npc` also works) |
+| `!eqlwiki zone West Freeport` | Zone lookup |
+| `!eqlwiki spell Complete Healing` | Spell lookup |
+| `!eqlwiki faction Guards of Qeynos` | Faction lookup |
+| `!eqlwiki SoulFire` | General wiki lookup |
+| `!eqlwiki help` | Short usage blurb |
+| `!eqlwiki stats` | Command usage counts (broadcaster/mods only; alias `usage`) |
 | `!magelo` | Same as `!roster` |
 | `!roster` | Link to [Norrath Roster](https://norrathroster.com); `!roster <name> <server>` opens a sheet |
 | `!roster Flesh freeport` | Direct character sheet link when the name exists on that server |
@@ -24,7 +24,7 @@ Replies are plain text plus a wiki link (Twitch has no embeds).
 
 ### Usage stats
 
-Every handled command (`!eql` lookups/help, `!magelo`, `!roster`, not-found) increments a counter persisted in JSON under `DATA_DIR` (default `./data/usage.json`). Docker mounts `./data:/app/data` so counts survive redeploys. In chat, mods/broadcaster can run `!eql stats` for a short summary.
+Every handled command (`!eqlwiki` lookups/help, `!magelo`, `!roster`, not-found) increments a counter persisted in JSON under `DATA_DIR` (default `./data/usage.json`). Docker mounts `./data:/app/data` so counts survive redeploys. In chat, mods/broadcaster can run `!eqlwiki stats` for a short summary.
 ## Quick start (after you have a token)
 
 ```bash
@@ -36,7 +36,7 @@ npm run smoke -- "item SoulFire"   # wiki only, no Twitch login
 npm run dev                        # connects to Twitch chat
 ```
 
-In your stream chat (or the channel listed in `TWITCH_CHANNELS`), try: `!eql help`
+In your stream chat (or the channel listed in `TWITCH_CHANNELS`), try: `!eqlwiki help`
 
 ## Your steps (Twitch — required once)
 
@@ -117,7 +117,7 @@ TWITCH_CHANNELS=your_streamer_login
 npm run dev
 ```
 
-You should see a “Connected … as …” log. In that channel’s chat: `!eql item SoulFire`.
+You should see a “Connected … as …” log. In that channel’s chat: `!eqlwiki item SoulFire`.
 
 ### 7. Deploy to Lightsail (same host as Chronicler)
 
@@ -155,7 +155,7 @@ Keep `.env` off git. Rebuild after code or token changes with `npm run deploy` a
 | `TWITCH_USERNAME` | yes | Bot login |
 | `TWITCH_OAUTH_TOKEN` | yes | With or without `oauth:` prefix |
 | `TWITCH_CHANNELS` | yes | Comma-separated channels to join |
-| `TWITCH_PREFIX` | no | Default `!eql` |
+| `TWITCH_PREFIX` | no | Default `!eqlwiki` |
 | `TWITCH_COOLDOWN_MS` | no | Default `2500` between replies per channel |
 | `DATA_DIR` | no | Default `./data` (Docker: `/app/data`) |
 | `USAGE_DB_PATH` | no | Default `$DATA_DIR/usage.json` |
