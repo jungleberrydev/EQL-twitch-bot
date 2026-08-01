@@ -18,7 +18,8 @@ export function clampChat(message: string, limit = TWITCH_MSG_LIMIT): string {
 }
 
 /**
- * Build `Name — summary | url`, preferring the URL when truncating.
+ * Build `Name: url — summary` so the wiki link sits early and stays
+ * clickable when the summary must be truncated.
  */
 export function formatLookupReply(opts: {
   name: string;
@@ -31,16 +32,30 @@ export function formatLookupReply(opts: {
   const summary = flattenWikiText(opts.description);
   const url = opts.pageUrl.trim();
 
-  const suffix = url ? ` | ${url}` : "";
-  const prefix = summary ? `${name} — ${summary}` : name;
-  const full = `${prefix}${suffix}`;
+  if (!url) {
+    const body = summary ? `${name} — ${summary}` : name;
+    return clampChat(body, limit);
+  }
+
+  const head = `${name}: ${url}`;
+  if (!summary) return preferUrl(head, url, limit);
+
+  const sep = " — ";
+  const full = `${head}${sep}${summary}`;
   if (full.length <= limit) return full;
 
-  const bodyBudget = Math.max(0, limit - suffix.length);
-  if (bodyBudget <= 1) return clampChat(url || name, limit);
+  // Prefer keeping the full URL; truncate summary only.
+  const summaryBudget = limit - head.length - sep.length;
+  if (summaryBudget <= 1) return preferUrl(head, url, limit);
 
-  const body = clampChat(prefix, bodyBudget);
-  return `${body}${suffix}`;
+  return `${head}${sep}${clampChat(summary, summaryBudget)}`;
+}
+
+/** Keep an intact URL when the name+url head itself exceeds the limit. */
+function preferUrl(head: string, url: string, limit: number): string {
+  if (head.length <= limit) return head;
+  if (url.length <= limit) return url;
+  return clampChat(url, limit);
 }
 
 export function formatAmbiguousChat(

@@ -19,6 +19,16 @@ describe("flattenWikiText", () => {
 });
 
 describe("formatLookupReply", () => {
+  it("puts the URL after the name", () => {
+    const url = "https://eqlwiki.com/SoulFire";
+    const out = formatLookupReply({
+      name: "SoulFire",
+      description: "A fire spell",
+      pageUrl: url,
+    });
+    assert.equal(out, `SoulFire: ${url} — A fire spell`);
+  });
+
   it("keeps the URL when truncating", () => {
     const url = "https://eqlwiki.com/SoulFire";
     const out = formatLookupReply({
@@ -27,8 +37,20 @@ describe("formatLookupReply", () => {
       pageUrl: url,
       limit: 80,
     });
-    assert.ok(out.endsWith(` | ${url}`));
+    assert.ok(out.startsWith(`SoulFire: ${url}`));
+    assert.ok(out.includes(url));
     assert.ok(out.length <= 80);
+  });
+
+  it("prefers the bare URL when name+url exceeds the limit", () => {
+    const url = "https://eqlwiki.com/VeryLongPageNameThatTakesSpace";
+    const out = formatLookupReply({
+      name: "Very Long Item Name Here",
+      description: "stats",
+      pageUrl: url,
+      limit: url.length,
+    });
+    assert.equal(out, url);
   });
 
   it("fits under the default Twitch limit", () => {
@@ -38,6 +60,7 @@ describe("formatLookupReply", () => {
       pageUrl: "https://eqlwiki.com/SoulFire",
     });
     assert.ok(out.length <= TWITCH_MSG_LIMIT);
+    assert.ok(out.includes("https://eqlwiki.com/SoulFire"));
   });
 });
 
