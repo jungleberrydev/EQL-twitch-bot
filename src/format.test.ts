@@ -1,0 +1,93 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+import {
+  TWITCH_MSG_LIMIT,
+  clampChat,
+  flattenWikiText,
+  formatAmbiguousChat,
+  formatLookupReply,
+} from "./format.js";
+import { parseEqlCommand } from "./handler.js";
+
+describe("flattenWikiText", () => {
+  it("collapses newlines and strips light markdown", () => {
+    assert.equal(
+      flattenWikiText("**SoulFire**\nAC: 0\n[wiki](https://x)"),
+      "SoulFire AC: 0 wiki",
+    );
+  });
+});
+
+describe("formatLookupReply", () => {
+  it("keeps the URL when truncating", () => {
+    const url = "https://eqlwiki.com/SoulFire";
+    const out = formatLookupReply({
+      name: "SoulFire",
+      description: "A".repeat(600),
+      pageUrl: url,
+      limit: 80,
+    });
+    assert.ok(out.endsWith(` | ${url}`));
+    assert.ok(out.length <= 80);
+  });
+
+  it("fits under the default Twitch limit", () => {
+    const out = formatLookupReply({
+      name: "SoulFire",
+      description: "B".repeat(1000),
+      pageUrl: "https://eqlwiki.com/SoulFire",
+    });
+    assert.ok(out.length <= TWITCH_MSG_LIMIT);
+  });
+});
+
+describe("formatAmbiguousChat", () => {
+  it("lists a few suggestions", () => {
+    const out = formatAmbiguousChat("soul", ["SoulFire", "SoulBind"]);
+    assert.match(out, /SoulFire/);
+    assert.match(out, /SoulBind/);
+  });
+});
+
+describe("clampChat", () => {
+  it("adds an ellipsis when over limit", () => {
+    assert.equal(clampChat("abcdef", 4), "abc…");
+  });
+});
+
+describe("parseEqlCommand", () => {
+  const prefix = "!eql";
+
+  it("parses typed item lookup", () => {
+    assert.deepEqual(parseEqlCommand("!eql item SoulFire", prefix), {
+      kind: "typed",
+      type: "item",
+      query: "SoulFire",
+    });
+  });
+
+  it("maps npc to mob", () => {
+    assert.deepEqual(parseEqlCommand("!eql npc a gnoll", prefix), {
+      kind: "typed",
+      type: "mob",
+      query: "a gnoll",
+    });
+  });
+
+  it("treats bare query as wiki", () => {
+    assert.deepEqual(parseEqlCommand("!eql SoulFire", prefix), {
+      kind: "wiki",
+      query: "SoulFire",
+    });
+  });
+
+  it("returns help", () => {
+    assert.deepEqual(parseEqlCommand("!eql", prefix), { kind: "help" });
+    assert.deepEqual(parseEqlCommand("!eql help", prefix), { kind: "help" });
+  });
+
+  it("ignores unrelated chat", () => {
+    assert.equal(parseEqlCommand("hello there", prefix), null);
+    assert.equal(parseEqlCommand("!item SoulFire", prefix), null);
+  });
+});
