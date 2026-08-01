@@ -5,6 +5,14 @@ function markdownLinkRe(): RegExp {
   return /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g;
 }
 
+/**
+ * Drop the scheme for Twitch chat. Clients still linkify `eqlwiki.com/Page`,
+ * and this saves 8 characters per URL.
+ */
+export function shortenChatUrl(url: string): string {
+  return url.trim().replace(/^https?:\/\//i, "");
+}
+
 /** Pull `[Label](url)` pairs from Discord-style wiki markdown. */
 export function extractMarkdownLinks(
   text: string,
@@ -56,7 +64,7 @@ export function flattenWikiText(text: string): string {
     .replace(/\r\n|\r|\n/g, " ")
     .replace(markdownLinkRe(), (_m, label: string, url: string) => {
       const i = placeholders.length;
-      placeholders.push(`${label} ${url}`);
+      placeholders.push(`${label} ${shortenChatUrl(url)}`);
       return `\u0000L${i}\u0000`;
     })
     .replace(/[*_`~]/g, "")
@@ -74,8 +82,10 @@ export function clampChat(message: string, limit = TWITCH_MSG_LIMIT): string {
   if (limit <= 1) return "…";
 
   let cut = message.slice(0, limit - 1);
-  // Avoid leaving a truncated https://… stump in chat.
-  const danglingUrl = cut.search(/https?:\/\/\S*$/);
+  // Avoid leaving a truncated URL stump in chat (with or without scheme).
+  const danglingUrl = cut.search(
+    /(?:https?:\/\/|(?:[a-z0-9-]+\.)+[a-z]{2,}\/)\S*$/i,
+  );
   if (danglingUrl >= 0) {
     cut = cut.slice(0, danglingUrl).trimEnd();
   } else {
@@ -103,15 +113,15 @@ export function formatLookupReply(opts: {
 }): string {
   const limit = opts.limit ?? TWITCH_MSG_LIMIT;
   const name = flattenWikiText(opts.name) || "EQLwiki";
-  const url = opts.pageUrl.trim();
+  const url = shortenChatUrl(opts.pageUrl);
   const effectLinks = extractEffectLinks(opts.description).filter(
-    (link) => link.url !== url,
+    (link) => shortenChatUrl(link.url) !== url,
   );
 
   let summary = flattenWikiText(opts.description);
   // Effect URLs are hoisted into the head — drop duplicates from the body.
   for (const link of effectLinks) {
-    summary = summary.replaceAll(` ${link.url}`, "");
+    summary = summary.replaceAll(` ${shortenChatUrl(link.url)}`, "");
   }
   summary = summary.replace(/\s+/g, " ").trim();
 
@@ -120,8 +130,10 @@ export function formatLookupReply(opts: {
     return clampChat(body, limit);
   }
 
+  // Effect name already appears later in the stats (`Effect: …`); the short
+  // URL path is enough to keep the spell page clickable up front.
   const effectHead = effectLinks
-    .map((link) => `${flattenWikiText(link.label)}: ${link.url}`)
+    .map((link) => shortenChatUrl(link.url))
     .join(" | ");
   const head = effectHead
     ? `${name}: ${url} | ${effectHead}`
@@ -170,4 +182,4 @@ export const HELP_TEXT = clampChat(
 
 /** Shared reply for !magelo / !roster. */
 export const ROSTER_LINK_REPLY =
-  "Character sheets: https://norrathroster.com";
+  "Character sheets: norrathroster.com";
