@@ -46,16 +46,16 @@ describe("formatUsageStats", () => {
       help: 6,
     };
     const out = formatUsageStats(counts);
-    assert.match(out, /total 42/);
-    assert.match(out, /item 10/);
-    assert.match(out, /wiki 15/);
+    assert.match(out, /^EQLwiki usage — total: 42 \|/);
+    assert.match(out, /item: 10/);
+    assert.match(out, /wiki: 15/);
     assert.ok(!out.includes("unknown"));
     assert.ok(out.length <= TWITCH_MSG_LIMIT);
   });
 
   it("shows unknown only when non-zero", () => {
     const withUnknown = { ...emptyCounts(), total: 1, unknown: 1 };
-    assert.match(formatUsageStats(withUnknown), /unknown 1/);
+    assert.match(formatUsageStats(withUnknown), /unknown: 1/);
   });
 });
 

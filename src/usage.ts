@@ -52,7 +52,7 @@ export function usageKindFromType(type: string): UsageKind {
 
 /**
  * Short Twitch-safe summary of command usage.
- * Example: `EQLwiki usage — total 42 | item 10 | mob 5 | …`
+ * Example: `EQLwiki usage — total: 42 | item: 10 | mob: 5 | …`
  */
 export function formatUsageStats(
   counts: UsageCounts,
@@ -62,8 +62,9 @@ export function formatUsageStats(
   const kinds = USAGE_KINDS.filter(
     (k) => k !== "unknown" || (counts.unknown ?? 0) > 0,
   );
-  const parts = kinds.map((k) => `${k} ${counts[k] ?? 0}`);
-  const body = `EQLwiki usage — total ${counts.total ?? 0} | ${parts.join(" | ")}`;
+  const parts = kinds.map((k) => `${k}: ${counts[k] ?? 0}`);
+  // Lead with total (every handled !eql increments it), then per-type breakdown.
+  const body = `EQLwiki usage — total: ${counts.total ?? 0} | ${parts.join(" | ")}`;
   return clampChat(body, limit);
 }
 
