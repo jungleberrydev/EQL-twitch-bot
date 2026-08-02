@@ -55,6 +55,62 @@ export function characterSheetUrl(id: number): string {
   return `${NORRATH_ROSTER_ORIGIN}/characters/${id}`;
 }
 
+export type RosterGuildSummary = {
+  name: string;
+  server: string;
+  serverName: string;
+  memberCount: number;
+};
+
+export type RosterGuildLookupResult =
+  | { ok: true; guild: RosterGuildSummary }
+  | {
+      ok: false;
+      reason: "not_found" | "ambiguous" | "invalid_server";
+      suggestions?: string[];
+    };
+
+export function guildPageUrl(serverKey: string, guildName: string): string {
+  return `${NORRATH_ROSTER_ORIGIN}/guilds/${encodeURIComponent(serverKey)}/${encodeURIComponent(guildName)}`;
+}
+
+/**
+ * Prefer exact guild-name matches (case-insensitive). Falls back to unique
+ * case-insensitive substring hits so short queries can still resolve.
+ */
+export function pickGuildMatches(
+  guilds: RosterGuildSummary[],
+  query: string,
+): RosterGuildSummary[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+
+  const exact = guilds.filter((g) => g.name.trim().toLowerCase() === q);
+  if (exact.length) return exact;
+
+  return guilds.filter((g) => g.name.trim().toLowerCase().includes(q));
+}
+
+type ApiGuild = {
+  name?: unknown;
+  memberCount?: unknown;
+};
+
+function mapGuild(
+  raw: ApiGuild,
+  server: EqServer,
+): RosterGuildSummary | null {
+  const name = typeof raw.name === "string" ? raw.name.trim() : "";
+  if (!name) return null;
+  const memberCount = Number(raw.memberCount);
+  return {
+    name,
+    server: server.key,
+    serverName: server.name,
+    memberCount: Number.isFinite(memberCount) ? Math.max(0, memberCount) : 0,
+  };
+}
+
 /**
  * Prefer exact full-name matches, else exact first-name matches
  * (case-insensitive). Ignores loose substring hits from the roster search.
@@ -152,4 +208,54 @@ export async function lookupCharacter(
     };
   }
   return { ok: true, character: matches[0]! };
+}
+
+/**
+ * Look up a public guild page by name + server via
+ * `GET /api/guilds?server=` (filter client-side; `q` is not applied by API).
+ */
+export async function lookupGuild(
+  name: string,
+  serverInput: string,
+): Promise<RosterGuildLookupResult> {
+  const server = resolveServer(serverInput);
+  if (!server) {
+    return { ok: false, reason: "invalid_server" };
+  }
+
+  const trimmedName = name.trim();
+  if (!trimmedName) {
+    return { ok: false, reason: "not_found" };
+  }
+
+  const url = new URL("/api/guilds", NORRATH_ROSTER_ORIGIN);
+  url.searchParams.set("server", server.key);
+
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": USER_AGENT,
+      Accept: "application/json",
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Norrath Roster API HTTP ${res.status}`);
+  }
+
+  const data = (await res.json()) as { guilds?: ApiGuild[] };
+  const mapped = (data.guilds ?? [])
+    .map((g) => mapGuild(g, server))
+    .filter((g): g is RosterGuildSummary => g !== null);
+
+  const matches = pickGuildMatches(mapped, trimmedName);
+  if (matches.length === 0) {
+    return { ok: false, reason: "not_found" };
+  }
+  if (matches.length > 1) {
+    return {
+      ok: false,
+      reason: "ambiguous",
+      suggestions: matches.slice(0, 5).map((g) => g.name),
+    };
+  }
+  return { ok: true, guild: matches[0]! };
 }

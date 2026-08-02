@@ -78,16 +78,22 @@ export function formatAmbiguousChat(
 }
 
 export const HELP_TEXT = clampChat(
-  "EQLwiki: !eqlwiki item|mob|zone|spell|faction <name> — or !eqlwiki <query>. Sheets: !roster <name> <server> (or !magelo)",
+  "EQLwiki: !eqlwiki item|mob|zone|spell|faction <name> — or !eqlwiki <query>. Sheets: !roster <name> <server> · !roster guild <name> <server> (or !magelo)",
 );
 
 /** Shared reply for bare !magelo / !roster. */
 export const ROSTER_LINK_REPLY =
-  "Character sheets: https://norrathroster.com — lookup: !roster <name> <server>";
+  "Norrath Roster: https://norrathroster.com — !roster <name> <server> · !roster guild <name> <server>";
 
 export function formatRosterUsage(command: "magelo" | "roster"): string {
   return clampChat(
-    `Usage: !${command} <name> <server> — or !${command} alone for https://norrathroster.com`,
+    `Usage: !${command} <name> <server> · !${command} guild <name> <server> — or !${command} alone for https://norrathroster.com`,
+  );
+}
+
+export function formatRosterGuildUsage(command: "magelo" | "roster"): string {
+  return clampChat(
+    `Usage: !${command} guild <name> <server>`,
   );
 }
 
@@ -100,8 +106,22 @@ export function formatRosterNotFound(
   );
 }
 
+export function formatRosterGuildNotFound(
+  name: string,
+  serverName: string,
+): string {
+  return clampChat(
+    `No Norrath Roster guild "${flattenWikiText(name)}" on ${flattenWikiText(serverName)}.`,
+  );
+}
+
 export function formatRosterInvalidServer(serverInput: string): string {
   return clampChat(
     `Unknown server "${flattenWikiText(serverInput)}". Try: qeynos, freeport, oggok, neriak, rivervale, halas, erudin, paineel`,
   );
+}
+
+export function formatGuildMemberSummary(memberCount: number): string {
+  if (memberCount === 1) return "1 member";
+  return `${memberCount} members`;
 }

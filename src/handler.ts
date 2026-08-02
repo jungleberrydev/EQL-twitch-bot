@@ -10,14 +10,19 @@ import {
   HELP_TEXT,
   ROSTER_LINK_REPLY,
   formatAmbiguousChat,
+  formatGuildMemberSummary,
   formatLookupReply,
+  formatRosterGuildNotFound,
+  formatRosterGuildUsage,
   formatRosterInvalidServer,
   formatRosterNotFound,
   formatRosterUsage,
 } from "./format.js";
 import {
   characterSheetUrl,
+  guildPageUrl,
   lookupCharacter,
+  lookupGuild,
   resolveServer,
 } from "./norrathroster.js";
 import {
@@ -62,11 +67,16 @@ export type HandleEqlOptions = {
 export type ParsedRosterLinkCommand =
   | { kind: RosterLinkCommand; lookup: null }
   | { kind: RosterLinkCommand; lookup: "incomplete" }
-  | { kind: RosterLinkCommand; lookup: { name: string; server: string } };
+  | { kind: RosterLinkCommand; lookup: "incomplete_guild" }
+  | {
+      kind: RosterLinkCommand;
+      lookup: { target: "character" | "guild"; name: string; server: string };
+    };
 
 /**
  * Parse standalone `!magelo` / `!roster` (case-insensitive).
- * With args: `!roster <name> <server>` (server is the last token).
+ * With args: `!roster <name> <server>` or `!roster guild <name> <server>`
+ * (server is the last token).
  */
 export function parseRosterLinkCommand(
   message: string,
@@ -81,12 +91,22 @@ export function parseRosterLinkCommand(
       const rest = trimmed.slice(bang.length).trim();
       if (!rest) return { kind: cmd, lookup: null };
       const parts = rest.split(/\s+/).filter(Boolean);
+      const first = parts[0]?.toLowerCase();
+      if (first === "guild") {
+        const guildParts = parts.slice(1);
+        if (guildParts.length < 2) {
+          return { kind: cmd, lookup: "incomplete_guild" };
+        }
+        const server = guildParts[guildParts.length - 1]!;
+        const name = guildParts.slice(0, -1).join(" ");
+        return { kind: cmd, lookup: { target: "guild", name, server } };
+      }
       if (parts.length < 2) {
         return { kind: cmd, lookup: "incomplete" };
       }
       const server = parts[parts.length - 1]!;
       const name = parts.slice(0, -1).join(" ");
-      return { kind: cmd, lookup: { name, server } };
+      return { kind: cmd, lookup: { target: "character", name, server } };
     }
   }
   return null;
@@ -107,9 +127,33 @@ export async function handleRosterLinkCommand(
   if (parsed.lookup === "incomplete") {
     return formatRosterUsage(parsed.kind);
   }
+  if (parsed.lookup === "incomplete_guild") {
+    return formatRosterGuildUsage(parsed.kind);
+  }
 
-  const { name, server } = parsed.lookup;
+  const { target, name, server } = parsed.lookup;
   try {
+    if (target === "guild") {
+      const result = await lookupGuild(name, server);
+      if (!result.ok) {
+        if (result.reason === "invalid_server") {
+          return formatRosterInvalidServer(server);
+        }
+        if (result.reason === "ambiguous" && result.suggestions?.length) {
+          return formatAmbiguousChat(name, result.suggestions, undefined, "roster");
+        }
+        const known = resolveServer(server);
+        return formatRosterGuildNotFound(name, known?.name ?? server);
+      }
+
+      const guild = result.guild;
+      return formatLookupReply({
+        name: `${guild.name} (${guild.serverName})`,
+        description: formatGuildMemberSummary(guild.memberCount),
+        pageUrl: guildPageUrl(guild.server, guild.name),
+      });
+    }
+
     const result = await lookupCharacter(name, server);
     if (!result.ok) {
       if (result.reason === "invalid_server") {

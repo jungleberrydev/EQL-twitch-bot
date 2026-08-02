@@ -19,6 +19,7 @@ Prefix defaults to `!eqlwiki`:
 | `!magelo` | Same as `!roster` |
 | `!roster` | Link to [Norrath Roster](https://norrathroster.com); `!roster <name> <server>` opens a sheet |
 | `!roster Flesh freeport` | Direct character sheet link when the name exists on that server |
+| `!roster guild Severely Artistic rivervale` | Guild page link when the guild exists on that server |
 
 Replies are plain text plus a wiki link (Twitch has no embeds).
 

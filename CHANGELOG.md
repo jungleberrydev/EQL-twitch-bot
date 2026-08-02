@@ -9,6 +9,12 @@ section and bump `package.json`. Use `[Unreleased]` only while work is still in 
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-08-02
+
+### Added
+
+- `!roster guild <name> <server>` (also `!magelo guild …`) — look up a guild via the Norrath Roster API and reply with the guild page URL and member count.
+
 ## [1.3.1] - 2026-08-01
 
 ### Added
