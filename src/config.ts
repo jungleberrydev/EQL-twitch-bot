@@ -30,19 +30,26 @@ function normalizeOauthToken(raw: string): string {
   return `oauth:${trimmed}`;
 }
 
-const channels = parseChannels("TWITCH_CHANNELS");
-if (channels.length === 0) {
-  throw new Error(
-    "Missing required env var: TWITCH_CHANNELS (comma-separated login names)",
-  );
-}
+/** Bootstrap channels from env (merged into durable channels.json on boot). */
+const bootstrapChannels = parseChannels("TWITCH_CHANNELS");
 
 const dataDir = optional("DATA_DIR") ?? "./data";
+
+const twitchClientId = optional("TWITCH_CLIENT_ID") ?? "";
+const twitchClientSecret = optional("TWITCH_CLIENT_SECRET") ?? "";
+const installRedirectUri =
+  optional("TWITCH_INSTALL_REDIRECT_URI") ??
+  "https://norrathroster.com/api/twitch-bot/oauth/callback";
+const installResultUrl =
+  optional("TWITCH_INSTALL_RESULT_URL") ??
+  "https://norrathroster.com/twitch-bot";
+const installHttpPort = Number(process.env.JOIN_API_PORT || 3911);
 
 export const config = {
   username: required("TWITCH_USERNAME").toLowerCase(),
   oauthToken: normalizeOauthToken(required("TWITCH_OAUTH_TOKEN")),
-  channels,
+  /** Env seed list — durable list lives in channelsFile. */
+  bootstrapChannels,
   /**
    * Chat command prefix. Default `!eqlwiki` so messages look like
    * `!eqlwiki item SoulFire` or `!eqlwiki SoulFire`.
@@ -54,4 +61,15 @@ export const config = {
   dataDir,
   /** JSON file for !eqlwiki command usage counters. */
   usageDbPath: optional("USAGE_DB_PATH") ?? path.join(dataDir, "usage.json"),
+  /** Durable channel list (self-serve installs append here). */
+  channelsFile:
+    optional("CHANNELS_FILE") ?? path.join(dataDir, "channels.json"),
+  installHttp: {
+    enabled: Boolean(twitchClientId && twitchClientSecret),
+    port: installHttpPort,
+    clientId: twitchClientId,
+    clientSecret: twitchClientSecret,
+    redirectUri: installRedirectUri,
+    resultUrl: installResultUrl,
+  },
 };

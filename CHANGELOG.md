@@ -9,6 +9,19 @@ section and bump `package.json`. Use `[Unreleased]` only while work is still in 
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-08-01
+
+### Added
+
+- `GET /status` — JSON `{ channelCount, channels }` for admin health (and ops).
+
+## [1.3.0] - 2026-08-01
+
+### Added
+
+- Self-serve channel install/remove via Twitch OAuth (proxied at `norrathroster.com/api/twitch-bot/*`).
+- Durable channel list in `data/channels.json` (seeded from `TWITCH_CHANNELS`); runtime `join`/`part` without redeploy.
+
 ## [1.2.0] - 2026-08-01
 
 ### Changed

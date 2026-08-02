@@ -1,9 +1,11 @@
 import tmi from "tmi.js";
 import { config } from "./config.js";
+import { ChannelStore, ensureChannelsFile } from "./channels.js";
 import {
   handleEqlCommand,
   handleRosterLinkCommand,
 } from "./handler.js";
+import { startInstallHttp } from "./installHttp.js";
 import { UsageStore, isChannelPrivileged } from "./usage.js";
 
 const lastReplyAt = new Map<string, number>();
@@ -22,6 +24,18 @@ function markReplied(channel: string): void {
 async function main(): Promise<void> {
   console.log(`Usage stats file: ${config.usageDbPath}`);
 
+  const ensured = ensureChannelsFile(
+    config.channelsFile,
+    config.bootstrapChannels,
+  );
+  if (ensured.channels.length === 0) {
+    throw new Error(
+      "No channels to join — set TWITCH_CHANNELS or add via self-serve install",
+    );
+  }
+  const store = new ChannelStore(config.channelsFile, ensured.channels);
+  console.log(`Channels file: ${config.channelsFile} (${store.list().join(", ")})`);
+
   const client = new tmi.Client({
     options: { skipUpdatingEmotesets: true },
     connection: { reconnect: true, secure: true },
@@ -29,12 +43,13 @@ async function main(): Promise<void> {
       username: config.username,
       password: config.oauthToken,
     },
-    channels: config.channels,
+    channels: store.list(),
   });
 
   client.on("connected", (addr, port) => {
     console.log(
-      `Connected to ${addr}:${port} as ${config.username}; channels: ${config.channels
+      `Connected to ${addr}:${port} as ${config.username}; channels: ${store
+        .list()
         .map((c) => `#${c}`)
         .join(", ")}; prefix: ${config.prefix}`,
     );
@@ -66,9 +81,12 @@ async function main(): Promise<void> {
     })();
   });
 
+  let installHttp: { close: () => Promise<void> } | undefined;
+
   const shutdown = async (signal: string) => {
     console.log(`Received ${signal}, disconnecting…`);
     try {
+      if (installHttp) await installHttp.close();
       await client.disconnect();
     } finally {
       process.exit(0);
@@ -79,6 +97,43 @@ async function main(): Promise<void> {
   process.on("SIGTERM", () => void shutdown("SIGTERM"));
 
   await client.connect();
+
+  if (config.installHttp.enabled) {
+    installHttp = startInstallHttp(config.installHttp, store, {
+      join: async (login) => {
+        const added = store.add(login);
+        if (added) {
+          await client.join(login);
+          console.log(`Joined #${login} (self-serve install)`);
+          return "joined";
+        }
+        // Already in store — still ensure IRC join after reconnect gaps.
+        try {
+          await client.join(login);
+        } catch {
+          /* already joined */
+        }
+        return "already";
+      },
+      part: async (login) => {
+        const removed = store.remove(login);
+        try {
+          await client.part(login);
+        } catch {
+          /* not in channel */
+        }
+        if (removed) {
+          console.log(`Left #${login} (self-serve remove)`);
+          return "left";
+        }
+        return "absent";
+      },
+    });
+  } else {
+    console.warn(
+      "Self-serve install disabled — set TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET to enable",
+    );
+  }
 }
 
 main().catch((error) => {

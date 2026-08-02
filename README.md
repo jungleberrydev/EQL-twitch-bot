@@ -109,7 +109,20 @@ TWITCH_OAUTH_TOKEN=oauth:paste_token_here
 TWITCH_CHANNELS=your_streamer_login
 ```
 
-`TWITCH_CHANNELS` is the channel(s) to join — usually **your streamer login**, not the bot’s. Comma-separate for multiple.
+`TWITCH_CHANNELS` is a **bootstrap** list merged into `data/channels.json` on boot. Streamers can also add/remove themselves via [norrathroster.com/twitch-bot](https://norrathroster.com/twitch-bot) (Twitch OAuth → bot joins at runtime).
+
+For self-serve, add the Twitch app’s **Client ID** and **Client Secret** to `.env`, and register this OAuth redirect URL on the app:
+
+```
+https://norrathroster.com/api/twitch-bot/oauth/callback
+```
+
+```
+TWITCH_CLIENT_ID=…
+TWITCH_CLIENT_SECRET=…
+```
+
+Caddy on the Chronicler stack proxies `/api/twitch-bot/*` to this bot; Compose attaches to the external `berrybot_berrybot` network.
 
 ### 6. Run locally
 
@@ -154,11 +167,15 @@ Keep `.env` off git. Rebuild after code or token changes with `npm run deploy` a
 |----------|----------|--------|
 | `TWITCH_USERNAME` | yes | Bot login |
 | `TWITCH_OAUTH_TOKEN` | yes | With or without `oauth:` prefix |
-| `TWITCH_CHANNELS` | yes | Comma-separated channels to join |
+| `TWITCH_CHANNELS` | seed | Bootstrap channels merged into `channels.json` |
+| `TWITCH_CLIENT_ID` | for install | Twitch app client ID (self-serve add/remove) |
+| `TWITCH_CLIENT_SECRET` | for install | Twitch app client secret |
 | `TWITCH_PREFIX` | no | Default `!eqlwiki` |
 | `TWITCH_COOLDOWN_MS` | no | Default `2500` between replies per channel |
 | `DATA_DIR` | no | Default `./data` (Docker: `/app/data`) |
 | `USAGE_DB_PATH` | no | Default `$DATA_DIR/usage.json` |
+| `CHANNELS_FILE` | no | Default `$DATA_DIR/channels.json` |
+| `JOIN_API_PORT` | no | Default `3911` (internal, via Caddy) |
 
 ## Scripts
 

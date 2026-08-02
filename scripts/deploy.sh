@@ -29,8 +29,15 @@ while IFS= read -r key; do
 done <<'EOF'
 TWITCH_USERNAME
 TWITCH_OAUTH_TOKEN
-TWITCH_CHANNELS
+TWITCH_CLIENT_ID
+TWITCH_CLIENT_SECRET
 EOF
+
+# Need at least one bootstrap channel OR an existing durable list on the server.
+channels_val="$(grep -E '^TWITCH_CHANNELS=' "$ROOT/.env" | tail -1 | cut -d= -f2- | tr -d '[:space:]')"
+if [[ -z "$channels_val" ]]; then
+  echo "Note: TWITCH_CHANNELS is empty — relying on server data/channels.json" >&2
+fi
 
 if ((${#missing[@]})); then
   echo "Fill these in $ROOT/.env before deploy: ${missing[*]}" >&2
