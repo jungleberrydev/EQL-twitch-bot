@@ -9,3 +9,14 @@ services:
     volumes:
       # Survives container rebuilds; rsync --exclude data keeps host ./data
       - ./data:/app/data
+    # Reachable from berrybot Caddy/web on the shared network (not published to host).
+    expose:
+      - "3911"
+    networks:
+      - default
+      - berrybot
+
+networks:
+  berrybot:
+    external: true
+    name: berrybot_berrybot
