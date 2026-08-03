@@ -90,6 +90,14 @@ describe("parseEqlCommand", () => {
     });
   });
 
+  it("keeps trailing +N in the item query", () => {
+    assert.deepEqual(parseEqlCommand("!eqlwiki item SoulFire +1", prefix), {
+      kind: "typed",
+      type: "item",
+      query: "SoulFire +1",
+    });
+  });
+
   it("maps npc to mob", () => {
     assert.deepEqual(parseEqlCommand("!eqlwiki npc a gnoll", prefix), {
       kind: "typed",

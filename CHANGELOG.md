@@ -9,6 +9,12 @@ section and bump `package.json`. Use `[Unreleased]` only while work is still in 
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-08-03
+
+### Added
+
+- `!eqlwiki item <name> +N` — reply with EQLwiki item-tier upgrade stats (+1…+10), using the same scaling rules as Norrath Roster sheet tooltips.
+
 ## [1.4.0] - 2026-08-02
 
 ### Added

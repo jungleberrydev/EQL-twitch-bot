@@ -1,6 +1,6 @@
 {
   "name": "eql-twitch-bot",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Twitch chat bot for EQLwiki lookups (!eqlwiki item, mob, zone, spell, faction)",
   "type": "module",
   "main": "dist/index.js",
