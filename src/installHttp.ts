@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { randomBytes } from "node:crypto";
 import type { ChannelStore } from "./channels.js";
 import { normalizeLogin } from "./channels.js";
+import { emptyCounts, type UsageStore } from "./usage.js";
 
 export type InstallHttpConfig = {
   port: number;
@@ -112,11 +113,13 @@ function twitchAuthorizeUrl(config: InstallHttpConfig, state: string): string {
 /**
  * Small public HTTP surface (proxied via Caddy) for self-serve install/remove.
  * Paths are rooted at / (Caddy strips /api/twitch-bot prefix).
+ * Also serves docker-internal `/status` (and `/usage`) for admin health.
  */
 export function startInstallHttp(
   config: InstallHttpConfig,
   store: ChannelStore,
   actions: ChannelActions,
+  usage?: UsageStore,
 ): { close: () => Promise<void> } {
   const pending = new Map<string, PendingOAuth>();
 
@@ -125,6 +128,23 @@ export function startInstallHttp(
     for (const [key, value] of pending) {
       if (value.expiresAt <= now) pending.delete(key);
     }
+  }
+
+  function usagePayload() {
+    if (usage) return usage.getReport();
+    const empty = emptyCounts();
+    const { total, ...byKind } = empty;
+    return { total, byKind, channels: [] as const };
+  }
+
+  function statusPayload() {
+    const channels = store.list();
+    return {
+      ok: true,
+      channelCount: channels.length,
+      channels,
+      usage: usagePayload(),
+    };
   }
 
   const server = createServer((req, res) => {
@@ -142,15 +162,20 @@ export function startInstallHttp(
       }
 
       if (req.method === "GET" && path === "/status") {
-        const channels = store.list();
         send(
           res,
           200,
-          JSON.stringify({
-            ok: true,
-            channelCount: channels.length,
-            channels,
-          }),
+          JSON.stringify(statusPayload()),
+          "application/json; charset=utf-8",
+        );
+        return;
+      }
+
+      if (req.method === "GET" && path === "/usage") {
+        send(
+          res,
+          200,
+          JSON.stringify({ ok: true, usage: usagePayload() }),
           "application/json; charset=utf-8",
         );
         return;

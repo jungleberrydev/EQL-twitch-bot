@@ -63,9 +63,10 @@ async function main(): Promise<void> {
       if (onCooldown(channel)) return;
 
       const reply =
-        (await handleRosterLinkCommand(message, { usage })) ??
+        (await handleRosterLinkCommand(message, { usage, channel })) ??
         (await handleEqlCommand(message, config.prefix, {
           usage,
+          channel,
           isPrivileged: isChannelPrivileged(channel, tags),
         }));
       if (!reply) return;
@@ -99,36 +100,41 @@ async function main(): Promise<void> {
   await client.connect();
 
   if (config.installHttp.enabled) {
-    installHttp = startInstallHttp(config.installHttp, store, {
-      join: async (login) => {
-        const added = store.add(login);
-        if (added) {
-          await client.join(login);
-          console.log(`Joined #${login} (self-serve install)`);
-          return "joined";
-        }
-        // Already in store — still ensure IRC join after reconnect gaps.
-        try {
-          await client.join(login);
-        } catch {
-          /* already joined */
-        }
-        return "already";
+    installHttp = startInstallHttp(
+      config.installHttp,
+      store,
+      {
+        join: async (login) => {
+          const added = store.add(login);
+          if (added) {
+            await client.join(login);
+            console.log(`Joined #${login} (self-serve install)`);
+            return "joined";
+          }
+          // Already in store — still ensure IRC join after reconnect gaps.
+          try {
+            await client.join(login);
+          } catch {
+            /* already joined */
+          }
+          return "already";
+        },
+        part: async (login) => {
+          const removed = store.remove(login);
+          try {
+            await client.part(login);
+          } catch {
+            /* not in channel */
+          }
+          if (removed) {
+            console.log(`Left #${login} (self-serve remove)`);
+            return "left";
+          }
+          return "absent";
+        },
       },
-      part: async (login) => {
-        const removed = store.remove(login);
-        try {
-          await client.part(login);
-        } catch {
-          /* not in channel */
-        }
-        if (removed) {
-          console.log(`Left #${login} (self-serve remove)`);
-          return "left";
-        }
-        return "absent";
-      },
-    });
+      usage,
+    );
   } else {
     console.warn(
       "Self-serve install disabled — set TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET to enable",

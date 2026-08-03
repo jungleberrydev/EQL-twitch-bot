@@ -25,7 +25,7 @@ Replies are plain text plus a wiki link (Twitch has no embeds).
 
 ### Usage stats
 
-Every handled command (`!eqlwiki` lookups/help, `!magelo`, `!roster`, not-found) increments a counter persisted in JSON under `DATA_DIR` (default `./data/usage.json`). Docker mounts `./data:/app/data` so counts survive redeploys. In chat, mods/broadcaster can run `!eqlwiki stats` for a short summary.
+Every handled command (`!eqlwiki` lookups/help, `!magelo`, `!roster`, not-found) increments a counter persisted in JSON under `DATA_DIR` (default `./data/usage.json`). Counts are global and per-channel (with `lastUsedAt`). Docker mounts `./data:/app/data` so counts survive redeploys. In chat, mods/broadcaster can run `!eqlwiki stats` for a short global summary. Admin health reads the same data from `GET /status` (or `GET /usage`) on the install HTTP port.
 ## Quick start (after you have a token)
 
 ```bash

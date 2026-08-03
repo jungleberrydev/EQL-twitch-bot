@@ -60,6 +60,8 @@ export type ParsedEqlCommand =
 
 export type HandleEqlOptions = {
   usage?: UsageStore;
+  /** Twitch channel login (with or without #) for per-channel usage. */
+  channel?: string;
   /** Broadcaster or mod — required for !eqlwiki stats. */
   isPrivileged?: boolean;
 };
@@ -115,11 +117,11 @@ export function parseRosterLinkCommand(
 /** Handle `!magelo` / `!roster`; returns a chat reply or null if ignored. */
 export async function handleRosterLinkCommand(
   message: string,
-  opts: { usage?: UsageStore } = {},
+  opts: { usage?: UsageStore; channel?: string } = {},
 ): Promise<string | null> {
   const parsed = parseRosterLinkCommand(message);
   if (!parsed) return null;
-  recordUsage(opts.usage, parsed.kind);
+  recordUsage(opts.usage, parsed.kind, opts.channel);
 
   if (parsed.lookup === null) {
     return ROSTER_LINK_REPLY;
@@ -232,10 +234,14 @@ export function parseEqlCommand(
   return { kind: "wiki", query: rest };
 }
 
-function recordUsage(usage: UsageStore | undefined, kind: UsageKind): void {
+function recordUsage(
+  usage: UsageStore | undefined,
+  kind: UsageKind,
+  channel?: string,
+): void {
   if (!usage) return;
   try {
-    usage.increment(kind);
+    usage.increment(kind, channel);
   } catch (err) {
     console.error("Failed to record usage:", err);
   }
@@ -365,16 +371,16 @@ export async function handleEqlCommand(
   }
 
   if (parsed.kind === "help") {
-    recordUsage(opts.usage, "help");
+    recordUsage(opts.usage, "help", opts.channel);
     return HELP_TEXT;
   }
 
   try {
     if (parsed.kind === "typed") {
-      recordUsage(opts.usage, usageKindFromType(parsed.type));
+      recordUsage(opts.usage, usageKindFromType(parsed.type), opts.channel);
       return await runTypedLookup(parsed.type, parsed.query);
     }
-    recordUsage(opts.usage, "wiki");
+    recordUsage(opts.usage, "wiki", opts.channel);
     return await runTypedLookup("wiki", parsed.query);
   } catch (err) {
     console.error("EQLwiki lookup failed:", err);
