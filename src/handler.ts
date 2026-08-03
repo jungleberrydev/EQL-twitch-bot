@@ -19,6 +19,11 @@ import {
   formatRosterUsage,
 } from "./format.js";
 import {
+  calculateUpgradedStatsText,
+  itemNameWithLevel,
+  parseItemLevelQuery,
+} from "./itemUpgrades.js";
+import {
   characterSheetUrl,
   guildPageUrl,
   lookupCharacter,
@@ -185,6 +190,7 @@ export async function handleRosterLinkCommand(
  * Examples (prefix `!eqlwiki`):
  *   !eqlwiki help
  *   !eqlwiki item SoulFire
+ *   !eqlwiki item SoulFire +1
  *   !eqlwiki SoulFire
  *   !eqlwiki stats
  */
@@ -250,20 +256,26 @@ function recordUsage(
 async function runTypedLookup(type: string, query: string): Promise<string> {
   switch (type) {
     case "item": {
-      const result = await lookupItem(query);
+      const { name: baseName, level } = parseItemLevelQuery(query);
+      const result = await lookupItem(baseName);
       if (!result.ok) {
         if (result.reason === "ambiguous" && result.suggestions?.length) {
-          return formatAmbiguousChat(query, result.suggestions);
+          return formatAmbiguousChat(baseName, result.suggestions);
         }
         if (result.reason === "not_item") {
-          return `Found ${result.suggestions?.[0] ?? query} on EQLwiki, but it is not an item. Try !eqlwiki wiki or !eqlwiki mob / !eqlwiki zone.`;
+          return `Found ${result.suggestions?.[0] ?? baseName} on EQLwiki, but it is not an item. Try !eqlwiki wiki or !eqlwiki mob / !eqlwiki zone.`;
         }
-        return `No EQLwiki item found for ${query}.`;
+        return `No EQLwiki item found for ${baseName}.`;
       }
+      const baseStats =
+        result.item.statsblock || "No statsblock on this item page.";
+      const description =
+        level > 0 && result.item.statsblock
+          ? calculateUpgradedStatsText(result.item.statsblock, level)
+          : baseStats;
       return formatLookupReply({
-        name: result.item.name,
-        description:
-          result.item.statsblock || "No statsblock on this item page.",
+        name: itemNameWithLevel(result.item.name, level),
+        description,
         pageUrl: result.item.pageUrl,
       });
     }

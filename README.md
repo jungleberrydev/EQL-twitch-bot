@@ -9,6 +9,7 @@ Prefix defaults to `!eqlwiki`:
 | Command | What it does |
 |---------|----------------|
 | `!eqlwiki item SoulFire` | Item lookup |
+| `!eqlwiki item SoulFire +1` | Item lookup with upgrade-tier stats (+1…+10) |
 | `!eqlwiki mob a gnoll` | NPC / mob lookup (`npc` also works) |
 | `!eqlwiki zone West Freeport` | Zone lookup |
 | `!eqlwiki spell Complete Healing` | Spell lookup |
