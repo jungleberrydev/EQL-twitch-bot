@@ -109,6 +109,57 @@ describe("UsageStore", () => {
       fs.rmSync(dir, { recursive: true, force: true });
     }
   });
+
+  it("tracks per-channel totals and lastUsedAt", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "eql-usage-"));
+    const file = path.join(dir, "usage.json");
+    try {
+      const store = new UsageStore(file);
+      store.increment("item", "#Alpha");
+      store.increment("item", "alpha");
+      store.increment("wiki", "beta");
+      store.increment("help", "beta");
+      store.increment("mob"); // global only
+
+      const report = store.getReport();
+      assert.equal(report.total, 5);
+      assert.equal(report.byKind.item, 2);
+      assert.equal(report.byKind.wiki, 1);
+      assert.equal(report.byKind.help, 1);
+      assert.equal(report.byKind.mob, 1);
+      assert.equal(report.channels.length, 2);
+      assert.equal(report.channels[0]?.channel, "alpha");
+      assert.equal(report.channels[0]?.total, 2);
+      assert.equal(report.channels[0]?.byKind.item, 2);
+      assert.ok(typeof report.channels[0]?.lastUsedAt === "number");
+      assert.equal(report.channels[1]?.channel, "beta");
+      assert.equal(report.channels[1]?.total, 2);
+
+      const reloaded = new UsageStore(file).getReport();
+      assert.equal(reloaded.channels[0]?.total, 2);
+      assert.equal(reloaded.channels[1]?.byKind.wiki, 1);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("loads legacy flat usage.json without channels", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "eql-usage-"));
+    const file = path.join(dir, "usage.json");
+    try {
+      fs.writeFileSync(
+        file,
+        JSON.stringify({ total: 3, item: 2, wiki: 1 }, null, 2),
+        "utf8",
+      );
+      const report = new UsageStore(file).getReport();
+      assert.equal(report.total, 3);
+      assert.equal(report.byKind.item, 2);
+      assert.deepEqual(report.channels, []);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("parseEqlCommand stats", () => {
