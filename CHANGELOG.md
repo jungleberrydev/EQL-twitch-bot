@@ -9,6 +9,12 @@ section and bump `package.json`. Use `[Unreleased]` only while work is still in 
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-08-03
+
+### Fixed
+
+- Item upgrade DMG now uses EQLwiki slider `scaleDamage` (`base + floor(base × tier / 10)`) instead of the primary-stat +1-per-tier floor (e.g. Rusty Dagger +10 is DMG 6, not 13).
+
 ## [1.5.0] - 2026-08-03
 
 ### Added

@@ -8,10 +8,13 @@ const MAX_ITEM_TIER = 10;
 /**
  * Numeric stats documented as scaling with item tier. Metadata such as item
  * level requirements, effect levels, capacity, haste, and weapon delay is
- * intentionally excluded.
+ * intentionally excluded. Weapon DMG uses a separate rule (see
+ * `upgradeDamageValue`).
  */
 const SCALING_STAT =
-  /^(?:AC|STR|STA|AGI|DEX|WIS|INT|CHA|HP|MANA|ENDURANCE|END|ATK|ATTACK|MR|FR|CR|DR|PR|SV\s+(?:MAGIC|FIRE|COLD|DISEASE|POISON|CORRUPTION)|HP\s+REGEN|MANA\s+REGEN|ENDURANCE\s+REGEN|HEROIC\s+(?:STR|STA|AGI|DEX|WIS|INT|CHA)|DMG|DAMAGE)$/i;
+  /^(?:AC|STR|STA|AGI|DEX|WIS|INT|CHA|HP|MANA|ENDURANCE|END|ATK|ATTACK|MR|FR|CR|DR|PR|SV\s+(?:MAGIC|FIRE|COLD|DISEASE|POISON|CORRUPTION)|HP\s+REGEN|MANA\s+REGEN|ENDURANCE\s+REGEN|HEROIC\s+(?:STR|STA|AGI|DEX|WIS|INT|CHA))$/i;
+
+const DAMAGE_STAT = /^(?:DMG|DAMAGE)$/i;
 
 /** Label + value pairs that may scale (`STR: +7`, `WT: 5.0`). */
 const SCALING_TOKEN_RE =
@@ -33,6 +36,16 @@ export function upgradeStatValue(base: number, level: number): number {
   if (tier === 0 || base === 0) return base;
   if (base < 0) return Math.min(0, base + tier);
   return Math.max(Math.floor(base * (1 + tier / 10)), base + tier);
+}
+
+/**
+ * Weapon damage — EQLwiki `ext.itemLevelSlider` `scaleDamage`:
+ * `base + floor(base * tier / 10)`. No +1-per-tier floor (unlike primary stats).
+ */
+export function upgradeDamageValue(base: number, level: number): number {
+  const tier = clampTier(level);
+  if (tier === 0 || base <= 0) return base;
+  return base + Math.floor((base * tier) / 10);
 }
 
 /** Weight falls by 10% of its base value per tier, never below 0.1. */
@@ -73,6 +86,7 @@ export function calculateUpgradedStatsText(
 
     const trimmedLabel = label.trim();
     const isWeight = /^(?:WT|WEIGHT)$/i.test(trimmedLabel);
+    const isDamage = DAMAGE_STAT.test(trimmedLabel);
     const isScalingStat = SCALING_STAT.test(trimmedLabel);
     let upgraded: string | null = null;
 
@@ -81,6 +95,12 @@ export function calculateUpgradedStatsText(
       if (Number.isFinite(base)) {
         const next = upgradeWeightValue(base, tier);
         if (next !== base) upgraded = next.toFixed(1);
+      }
+    } else if (isDamage) {
+      const base = Number(raw);
+      if (Number.isInteger(base)) {
+        const next = upgradeDamageValue(base, tier);
+        if (next !== base) upgraded = formatScaledValue(raw, next);
       }
     } else if (isScalingStat) {
       const base = Number(raw);
