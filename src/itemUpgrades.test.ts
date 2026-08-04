@@ -6,6 +6,7 @@ import {
   itemNameWithLevel,
   parseItemLevelQuery,
   stripItemLevel,
+  upgradeDamageValue,
   upgradeStatValue,
   upgradeWeightValue,
 } from "./itemUpgrades.js";
@@ -31,6 +32,20 @@ describe("upgradeStatValue", () => {
   });
 });
 
+describe("upgradeDamageValue", () => {
+  it("uses base + floor(base * tier / 10) with no +1 floor", () => {
+    // Rusty Dagger — small DMG must not get base+tier
+    assert.equal(upgradeDamageValue(3, 0), 3);
+    assert.equal(upgradeDamageValue(3, 1), 3);
+    assert.equal(upgradeDamageValue(3, 4), 4);
+    assert.equal(upgradeDamageValue(3, 10), 6);
+    // Larger weapons still roughly double at +10
+    assert.equal(upgradeDamageValue(23, 1), 25);
+    assert.equal(upgradeDamageValue(23, 10), 46);
+    assert.equal(upgradeDamageValue(33, 10), 66);
+  });
+});
+
 describe("upgradeWeightValue", () => {
   it("drops weight by 10% of base per tier", () => {
     assert.equal(upgradeWeightValue(4.0, 4), 2.4);
@@ -47,6 +62,16 @@ describe("calculateUpgradedStatsText", () => {
     assert.equal(
       calculateUpgradedStatsText("CHA: -1 AGI: +1", 3),
       "CHA: 0 AGI: +4",
+    );
+  });
+
+  it("scales DMG without the primary-stat +1 floor", () => {
+    assert.equal(
+      calculateUpgradedStatsText(
+        "Skill: Piercing Atk Delay: 24 DMG: 3 WT: 2.5",
+        10,
+      ),
+      "Skill: Piercing Atk Delay: 24 DMG: 6 WT: 0.1",
     );
   });
 
