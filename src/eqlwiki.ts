@@ -1,3 +1,5 @@
+import { expandWikiAlias } from "./wikiAliases.js";
+
 const API_BASE = "https://eqlwiki.com/api.php";
 const SITE_BASE = "https://eqlwiki.com";
 const USER_AGENT =
@@ -672,7 +674,7 @@ type ResolvePageResult =
   | { ok: false; reason: "not_found" | "ambiguous"; suggestions?: string[] };
 
 async function resolveWikiPage(query: string): Promise<ResolvePageResult> {
-  const trimmed = query.trim();
+  const trimmed = expandWikiAlias(query);
   if (!trimmed) {
     return { ok: false, reason: "not_found" };
   }
