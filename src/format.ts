@@ -78,7 +78,7 @@ export function formatAmbiguousChat(
 }
 
 export const HELP_TEXT = clampChat(
-  "EQLwiki: !eqlwiki item|mob|zone|spell|faction <name> — item supports +N (e.g. SoulFire +1). Or !eqlwiki <query>. Sheets: !roster <name> <server> · !roster guild <name> <server> (or !magelo)",
+  "EQLwiki: !eqlwiki item|mob|zone|spell|faction <name> — item supports +N and abbrevs (fbss, yak). Or !eqlwiki <query>. Sheets: !roster <name> <server> · !roster guild <name> <server> (or !magelo)",
 );
 
 /** Shared reply for bare !magelo / !roster. */

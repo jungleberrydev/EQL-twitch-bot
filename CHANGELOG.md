@@ -9,6 +9,12 @@ section and bump `package.json`. Use `[Unreleased]` only while work is still in 
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-08-09
+
+### Added
+
+- Common item abbreviations for wiki/item lookups (e.g. `!eqlwiki fbss`, `!eqlwiki yak`, `!eqlwiki item hbc +1`). Curated map in `src/wikiAliases.ts` (FBSS, yak/SSOY, jboots, HBC, PGT, CBB, EBW, WDC, FOTG, and other classics).
+
 ## [1.5.1] - 2026-08-03
 
 ### Fixed
