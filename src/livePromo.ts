@@ -6,19 +6,35 @@ export type LivePromoOptions = {
   getChannels: () => string[];
   credentials: HelixCredentials;
   intervalMs: number;
-  message: string;
+  /** Tips to rotate through (one tip per tick, same tip in all live channels). */
+  messages: string[];
   /** Delay between outbound says when multiple channels are live. */
   sayGapMs?: number;
 };
 
+/** Pick the tip for this tick (shared across all live channels). */
+export function selectPromoMessage(messages: string[], tickIndex: number): string {
+  if (messages.length === 0) {
+    throw new Error("Live promo requires at least one message");
+  }
+  return messages[tickIndex % messages.length]!;
+}
+
 /**
  * Periodically announce in channels that are currently live.
+ * Rotates through `messages` one tip per interval tick.
  * Returns a stop function for graceful shutdown.
  */
 export function startLivePromo(opts: LivePromoOptions): () => void {
   const sayGapMs = opts.sayGapMs ?? 750;
+  const messages = opts.messages.map((m) => m.trim()).filter(Boolean);
+  if (messages.length === 0) {
+    throw new Error("Live promo requires at least one message");
+  }
+
   let running = false;
   let stopped = false;
+  let tickIndex = 0;
 
   const tick = async () => {
     if (stopped || running) return;
@@ -33,6 +49,9 @@ export function startLivePromo(opts: LivePromoOptions): () => void {
         return;
       }
 
+      const message = selectPromoMessage(messages, tickIndex);
+      tickIndex += 1;
+
       const targets = channels.filter((c) => live.has(c));
       console.log(
         `Live promo: announcing in ${targets.length} live channel(s): ${targets
@@ -43,7 +62,7 @@ export function startLivePromo(opts: LivePromoOptions): () => void {
       for (const login of targets) {
         if (stopped) break;
         try {
-          await opts.client.say(`#${login}`, opts.message);
+          await opts.client.say(`#${login}`, message);
         } catch (err) {
           console.error(`Live promo: failed to say in #${login}:`, err);
         }
@@ -59,7 +78,7 @@ export function startLivePromo(opts: LivePromoOptions): () => void {
   };
 
   console.log(
-    `Live promo enabled — every ${Math.round(opts.intervalMs / 1000)}s while channels are live`,
+    `Live promo enabled — ${messages.length} tip(s), every ${Math.round(opts.intervalMs / 1000)}s while channels are live`,
   );
   const timer = setInterval(() => void tick(), opts.intervalMs);
   // First pass after a short delay so IRC is settled.

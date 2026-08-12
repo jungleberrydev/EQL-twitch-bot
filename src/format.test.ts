@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { parseEqlCommand, parseRosterLinkCommand } from "./handler.js";
 import {
+  BOT_INTRO_PROMO_REPLY,
+  DEFAULT_PROMO_MESSAGES,
   ROSTER_LINK_REPLY,
   ROSTER_PROMO_REPLY,
   TWITCH_MSG_LIMIT,
@@ -160,5 +162,18 @@ describe("parseRosterLinkCommand", () => {
     assert.ok(ROSTER_PROMO_REPLY.includes("https://norrathroster.com"));
     assert.ok(ROSTER_PROMO_REPLY.includes("character sheets"));
     assert.ok(ROSTER_PROMO_REPLY.length <= TWITCH_MSG_LIMIT);
+  });
+
+  it("keeps the bot intro promo under the chat limit", () => {
+    assert.ok(BOT_INTRO_PROMO_REPLY.includes("!eqlwiki"));
+    assert.ok(BOT_INTRO_PROMO_REPLY.includes("!roster"));
+    assert.ok(BOT_INTRO_PROMO_REPLY.length <= TWITCH_MSG_LIMIT);
+  });
+
+  it("defaults to roster then bot intro tips", () => {
+    assert.deepEqual(DEFAULT_PROMO_MESSAGES, [
+      ROSTER_PROMO_REPLY,
+      BOT_INTRO_PROMO_REPLY,
+    ]);
   });
 });

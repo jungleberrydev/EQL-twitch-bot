@@ -89,6 +89,16 @@ export const ROSTER_LINK_REPLY =
 export const ROSTER_PROMO_REPLY =
   "Create and view character sheets at https://norrathroster.com — look one up anytime with !roster <name> <server>";
 
+/** Periodic live-stream tip for what the bot can do in chat. */
+export const BOT_INTRO_PROMO_REPLY =
+  "EQ Classic wiki + sheets: !eqlwiki <item/mob/zone/spell> · !roster <name> <server> · !eqlwiki help";
+
+/** Default hourly tips (round-robin while channels are live). */
+export const DEFAULT_PROMO_MESSAGES = [
+  ROSTER_PROMO_REPLY,
+  BOT_INTRO_PROMO_REPLY,
+] as const;
+
 export function formatRosterUsage(command: "magelo" | "roster"): string {
   return clampChat(
     `Usage: !${command} <name> <server> · !${command} guild <name> <server> — or !${command} alone for https://norrathroster.com`,

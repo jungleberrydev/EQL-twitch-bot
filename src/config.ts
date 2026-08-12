@@ -83,8 +83,9 @@ export const config = {
     resultUrl: installResultUrl,
   },
   /**
-   * Hourly norrathroster.com tip in live channels.
+   * Hourly rotating tips in live channels (roster + bot intro by default).
    * Needs TWITCH_CLIENT_ID / SECRET (same as self-serve install).
+   * PROMO_MESSAGE replaces the default rotation with a single tip.
    */
   promo: {
     enabled: promoEnabled,
