@@ -9,6 +9,12 @@ section and bump `package.json`. Use `[Unreleased]` only while work is still in 
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-08-11
+
+### Added
+
+- Hourly live-stream promo pointing viewers to https://norrathroster.com for character sheets (Helix live check; `PROMO_INTERVAL_MS` / `PROMO_MESSAGE` / `PROMO_ENABLED`).
+
 ## [1.6.0] - 2026-08-09
 
 ### Added

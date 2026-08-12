@@ -85,6 +85,10 @@ export const HELP_TEXT = clampChat(
 export const ROSTER_LINK_REPLY =
   "Norrath Roster: https://norrathroster.com — !roster <name> <server> · !roster guild <name> <server>";
 
+/** Periodic live-stream tip for character sheets. */
+export const ROSTER_PROMO_REPLY =
+  "Create and view character sheets at https://norrathroster.com — look one up anytime with !roster <name> <server>";
+
 export function formatRosterUsage(command: "magelo" | "roster"): string {
   return clampChat(
     `Usage: !${command} <name> <server> · !${command} guild <name> <server> — or !${command} alone for https://norrathroster.com`,
