@@ -45,6 +45,16 @@ const installResultUrl =
   "https://norrathroster.com/twitch-bot";
 const installHttpPort = Number(process.env.JOIN_API_PORT || 3911);
 
+/** Hourly by default; disable with PROMO_ENABLED=false. */
+const promoIntervalMs = Number(process.env.PROMO_INTERVAL_MS || 3_600_000);
+const promoEnabledEnv = optional("PROMO_ENABLED");
+const promoHasCreds = Boolean(twitchClientId && twitchClientSecret);
+const promoEnabled =
+  promoHasCreds &&
+  (promoEnabledEnv === undefined
+    ? true
+    : !["0", "false", "no", "off"].includes(promoEnabledEnv.toLowerCase()));
+
 export const config = {
   username: required("TWITCH_USERNAME").toLowerCase(),
   oauthToken: normalizeOauthToken(required("TWITCH_OAUTH_TOKEN")),
@@ -71,5 +81,14 @@ export const config = {
     clientSecret: twitchClientSecret,
     redirectUri: installRedirectUri,
     resultUrl: installResultUrl,
+  },
+  /**
+   * Hourly norrathroster.com tip in live channels.
+   * Needs TWITCH_CLIENT_ID / SECRET (same as self-serve install).
+   */
+  promo: {
+    enabled: promoEnabled,
+    intervalMs: promoIntervalMs,
+    message: optional("PROMO_MESSAGE"),
   },
 };

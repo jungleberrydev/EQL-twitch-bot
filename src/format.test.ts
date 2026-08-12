@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { parseEqlCommand, parseRosterLinkCommand } from "./handler.js";
 import {
   ROSTER_LINK_REPLY,
+  ROSTER_PROMO_REPLY,
   TWITCH_MSG_LIMIT,
   clampChat,
   flattenWikiText,
@@ -153,5 +154,11 @@ describe("parseRosterLinkCommand", () => {
   it("uses the shared short reply text", () => {
     assert.ok(ROSTER_LINK_REPLY.includes("https://norrathroster.com"));
     assert.ok(ROSTER_LINK_REPLY.length <= TWITCH_MSG_LIMIT);
+  });
+
+  it("keeps the live promo under the chat limit", () => {
+    assert.ok(ROSTER_PROMO_REPLY.includes("https://norrathroster.com"));
+    assert.ok(ROSTER_PROMO_REPLY.includes("character sheets"));
+    assert.ok(ROSTER_PROMO_REPLY.length <= TWITCH_MSG_LIMIT);
   });
 });

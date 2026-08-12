@@ -1,11 +1,13 @@
 import tmi from "tmi.js";
 import { config } from "./config.js";
 import { ChannelStore, ensureChannelsFile } from "./channels.js";
+import { ROSTER_PROMO_REPLY } from "./format.js";
 import {
   handleEqlCommand,
   handleRosterLinkCommand,
 } from "./handler.js";
 import { startInstallHttp } from "./installHttp.js";
+import { startLivePromo } from "./livePromo.js";
 import { UsageStore, isChannelPrivileged } from "./usage.js";
 
 const lastReplyAt = new Map<string, number>();
@@ -83,10 +85,12 @@ async function main(): Promise<void> {
   });
 
   let installHttp: { close: () => Promise<void> } | undefined;
+  let stopLivePromo: (() => void) | undefined;
 
   const shutdown = async (signal: string) => {
     console.log(`Received ${signal}, disconnecting…`);
     try {
+      stopLivePromo?.();
       if (installHttp) await installHttp.close();
       await client.disconnect();
     } finally {
@@ -139,6 +143,25 @@ async function main(): Promise<void> {
     console.warn(
       "Self-serve install disabled — set TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET to enable",
     );
+  }
+
+  if (config.promo.enabled) {
+    stopLivePromo = startLivePromo({
+      client,
+      getChannels: () => store.list(),
+      credentials: {
+        clientId: config.installHttp.clientId,
+        clientSecret: config.installHttp.clientSecret,
+      },
+      intervalMs: config.promo.intervalMs,
+      message: config.promo.message ?? ROSTER_PROMO_REPLY,
+    });
+  } else if (!config.installHttp.clientId || !config.installHttp.clientSecret) {
+    console.warn(
+      "Live promo disabled — set TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET to enable",
+    );
+  } else {
+    console.log("Live promo disabled (PROMO_ENABLED=false)");
   }
 }
 
