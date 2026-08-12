@@ -25,7 +25,7 @@ Prefix defaults to `!eqlwiki`:
 
 Replies are plain text plus a wiki link (Twitch has no embeds).
 
-While a joined channel is live, the bot also posts an hourly tip for [Norrath Roster](https://norrathroster.com) character sheets (needs `TWITCH_CLIENT_ID` / `TWITCH_CLIENT_SECRET`; see `PROMO_*` env vars).
+While a joined channel is live, the bot also posts an hourly tip that rotates between [Norrath Roster](https://norrathroster.com) character sheets and a short intro to `!eqlwiki` / `!roster` (needs `TWITCH_CLIENT_ID` / `TWITCH_CLIENT_SECRET`; see `PROMO_*` env vars).
 
 ### Usage stats
 
@@ -177,9 +177,9 @@ Keep `.env` off git. Rebuild after code or token changes with `npm run deploy` a
 | `TWITCH_CLIENT_SECRET` | for install | Twitch app client secret |
 | `TWITCH_PREFIX` | no | Default `!eqlwiki` |
 | `TWITCH_COOLDOWN_MS` | no | Default `2500` between replies per channel |
-| `PROMO_ENABLED` | no | Live-channel roster tip; default on when client id/secret set |
+| `PROMO_ENABLED` | no | Live-channel hourly tips; default on when client id/secret set |
 | `PROMO_INTERVAL_MS` | no | Default `3600000` (1 hour) between promo checks |
-| `PROMO_MESSAGE` | no | Override promo chat text |
+| `PROMO_MESSAGE` | no | Replace the default rotating tips with a single tip |
 | `DATA_DIR` | no | Default `./data` (Docker: `/app/data`) |
 | `USAGE_DB_PATH` | no | Default `$DATA_DIR/usage.json` |
 | `CHANNELS_FILE` | no | Default `$DATA_DIR/channels.json` |

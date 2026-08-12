@@ -9,6 +9,12 @@ section and bump `package.json`. Use `[Unreleased]` only while work is still in 
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-08-11
+
+### Changed
+
+- Hourly live tips now rotate between the norrathroster.com character-sheets promo and a short bot-capabilities intro (`!eqlwiki` / `!roster` / help). One tip per hour; `PROMO_MESSAGE` still overrides with a single tip.
+
 ## [1.7.0] - 2026-08-11
 
 ### Added

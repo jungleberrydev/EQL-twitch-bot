@@ -1,7 +1,7 @@
 import tmi from "tmi.js";
 import { config } from "./config.js";
 import { ChannelStore, ensureChannelsFile } from "./channels.js";
-import { ROSTER_PROMO_REPLY } from "./format.js";
+import { DEFAULT_PROMO_MESSAGES } from "./format.js";
 import {
   handleEqlCommand,
   handleRosterLinkCommand,
@@ -154,7 +154,9 @@ async function main(): Promise<void> {
         clientSecret: config.installHttp.clientSecret,
       },
       intervalMs: config.promo.intervalMs,
-      message: config.promo.message ?? ROSTER_PROMO_REPLY,
+      messages: config.promo.message
+        ? [config.promo.message]
+        : [...DEFAULT_PROMO_MESSAGES],
     });
   } else if (!config.installHttp.clientId || !config.installHttp.clientSecret) {
     console.warn(
